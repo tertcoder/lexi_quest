@@ -1,122 +1,298 @@
 import 'package:flutter/material.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/app_colors.dart';
+import 'core/theme/app_fonts.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const LexiQuestApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class LexiQuestApp extends StatelessWidget {
+  const LexiQuestApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'LexiQuest',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      home: const ThemePreviewScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+/// A preview screen to showcase the LexiQuest theme configuration
+class ThemePreviewScreen extends StatefulWidget {
+  const ThemePreviewScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ThemePreviewScreen> createState() => _ThemePreviewScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class _ThemePreviewScreenState extends State<ThemePreviewScreen> {
+  bool _isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('LexiQuest Theme Preview'),
+        actions: [
+          IconButton(
+            icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () {
+              setState(() {
+                _isDarkMode = !_isDarkMode;
+              });
+            },
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: Theme(
+        data: _isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Colors Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Color Palette', style: AppFonts.headlineSmall),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _ColorSwatch(
+                            'Primary Indigo 600',
+                            AppColors.primaryIndigo600,
+                          ),
+                          _ColorSwatch(
+                            'Primary Indigo 500',
+                            AppColors.primaryIndigo500,
+                          ),
+                          _ColorSwatch(
+                            'Primary Indigo Dark',
+                            AppColors.primaryIndigoDark,
+                          ),
+                          _ColorSwatch(
+                            'Secondary Green',
+                            AppColors.secondaryGreen500,
+                          ),
+                          _ColorSwatch(
+                            'Secondary Amber',
+                            AppColors.secondaryAmber500,
+                          ),
+                          _ColorSwatch(
+                            'Secondary Red',
+                            AppColors.secondaryRed500,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Typography Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Typography (Mulish Font)',
+                        style: AppFonts.headlineSmall,
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Display Large', style: AppFonts.displayLarge),
+                      Text('Headline Large', style: AppFonts.headlineLarge),
+                      Text('Title Large', style: AppFonts.titleLarge),
+                      Text('Body Large', style: AppFonts.bodyLarge),
+                      Text('Label Large', style: AppFonts.labelLarge),
+                      Text('Body Small', style: AppFonts.bodySmall),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Buttons Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Button Styles', style: AppFonts.headlineSmall),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {},
+                            child: const Text('Elevated Button'),
+                          ),
+                          OutlinedButton(
+                            onPressed: () {},
+                            child: const Text('Outlined Button'),
+                          ),
+                          TextButton(
+                            onPressed: () {},
+                            child: const Text('Text Button'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Input Fields Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Input Fields', style: AppFonts.headlineSmall),
+                      const SizedBox(height: 16),
+                      const TextField(
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'Enter your email',
+                          prefixIcon: Icon(Icons.email),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const TextField(
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          hintText: 'Enter your password',
+                          prefixIcon: Icon(Icons.lock),
+                          suffixIcon: Icon(Icons.visibility),
+                        ),
+                        obscureText: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Chips Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Chips & Tags', style: AppFonts.headlineSmall),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Chip(
+                            label: const Text('Text Annotation'),
+                            avatar: CircleAvatar(
+                              backgroundColor: AppColors.secondaryGreen500,
+                              child: const Text('T'),
+                            ),
+                          ),
+                          Chip(
+                            label: const Text('Image Labeling'),
+                            avatar: CircleAvatar(
+                              backgroundColor: AppColors.secondaryAmber500,
+                              child: const Text('I'),
+                            ),
+                          ),
+                          ActionChip(
+                            label: const Text('AI Assist'),
+                            onPressed: () {},
+                            avatar: const Icon(Icons.smart_toy, size: 18),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('LexiQuest theme is looking great! 🎯'),
+            ),
+          );
+        },
+        tooltip: 'Test Theme',
+        child: const Icon(Icons.palette),
+      ),
+    );
+  }
+}
+
+class _ColorSwatch extends StatelessWidget {
+  final String name;
+  final Color color;
+
+  const _ColorSwatch(this.name, this.color);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 120,
+      height: 80,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.neutralSlate600_30),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+              name,
+              style: AppFonts.labelSmall.copyWith(
+                color: _getContrastColor(color),
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  Color _getContrastColor(Color backgroundColor) {
+    // Calculate relative luminance
+    final luminance = backgroundColor.computeLuminance();
+    // Return white for dark colors, dark for light colors
+    return luminance > 0.5 ? AppColors.neutralSlate900 : AppColors.neutralWhite;
   }
 }
