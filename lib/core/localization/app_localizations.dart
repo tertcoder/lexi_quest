@@ -1,0 +1,1 @@
+// Setup localization delegate

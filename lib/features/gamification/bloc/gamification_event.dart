@@ -1,0 +1,1 @@
+// Gamification events definition
