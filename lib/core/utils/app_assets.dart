@@ -65,6 +65,7 @@ class AppAssets {
   static const String icClose = '$_svgsPath/icons/ic_close.svg';
   static const String icBack = '$_svgsPath/icons/ic_back.svg';
   static const String icNext = '$_svgsPath/icons/ic_next.svg';
+  static const String icArrowRight = '$_svgsPath/icons/ic_arrow_right.svg';
   static const String icSearch = '$_svgsPath/icons/ic_search.svg';
   static const String icFilter = '$_svgsPath/icons/ic_filter.svg';
   static const String icSort = '$_svgsPath/icons/ic_sort.svg';
@@ -75,6 +76,8 @@ class AppAssets {
   static const String illError = '$_svgsPath/illustrations/error.svg';
   static const String illSuccess = '$_svgsPath/illustrations/success.svg';
   static const String illLoading = '$_svgsPath/illustrations/loading.svg';
+  static const String illLiney = '$_imagesPath/illustrations/liney.png';
+  static const String illLineWave = '$_imagesPath/illustrations/line_wave.png';
 
   // Data files
   static const String sampleAnnotations = '$_dataPath/sample_annotations.json';

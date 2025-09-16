@@ -41,6 +41,9 @@ dependencies:
   # Flutter SVG for scalable vector graphics
   flutter_svg: ^2.0.9
 
+  # GoRouter for declarative routing
+  go_router: ^14.6.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
