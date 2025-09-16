@@ -1,26 +1,25 @@
 # Placeholder for Gamification Badges
 
 Place your badge images here:
+  ## Badge Types:
+  - badge_bronze.png - Bronze tier badge
+  - badge_silver.png - Silver tier badge
+  - badge_gold.png - Gold tier badge
+  - badge_diamond.png - Diamond tier badge
 
-## Badge Types:
-- `badge_bronze.png` - Bronze tier badge
-- `badge_silver.png` - Silver tier badge  
-- `badge_gold.png` - Gold tier badge
-- `badge_diamond.png` - Diamond tier badge
+  ## Achievement Badges:
+  - badge_first_annotation.png - First annotation completed
+  - badge_streak_master.png - Streak achievement badge
+  - badge_ai_expert.png - AI annotation expert badge
 
-## Achievement Badges:
-- `badge_first_annotation.png` - First annotation completed
-- `badge_streak_master.png` - Streak achievement badge
-- `badge_ai_expert.png` - AI annotation expert badge
+  ## Design requirements:
+  - Circular or shield-shaped design
+  - Metallic/shiny finish for premium feel
+  - Size: 64x64 dp (192x192 px @3x)
+  - PNG with transparency
+  - Colors should match tier (bronze, silver, gold, diamond)
 
-## Design requirements:
-- Circular or shield-shaped design
-- Metallic/shiny finish for premium feel
-- Size: 64x64 dp (192x192 px @3x)
-- PNG with transparency
-- Colors should match tier (bronze, silver, gold, diamond)
-
-## Style:
-- Motivating and rewarding visual design
-- Game-like but professional appearance
-- Consistent style across all badges
+  ## Style:
+  - Motivating and rewarding visual design
+  - Game-like but professional appearance
+  - Consistent style across all badges

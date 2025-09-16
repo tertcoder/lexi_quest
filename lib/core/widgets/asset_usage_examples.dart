@@ -25,7 +25,7 @@ class AssetUsageExamples extends StatelessWidget {
               children: [
                 // Using SVG assets (requires flutter_svg package)
                 SvgPicture.asset(
-                  AppAssets.Svgs.icHome,
+                  AppAssets.icHome,
                   width: 24,
                   height: 24,
                   colorFilter: ColorFilter.mode(
@@ -34,20 +34,11 @@ class AssetUsageExamples extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                SvgPicture.asset(
-                  AppAssets.Svgs.icAnnotation,
-                  width: 24,
-                  height: 24,
-                ),
+                SvgPicture.asset(AppAssets.icAnnotation, width: 24, height: 24),
                 const SizedBox(width: 16),
-                SvgPicture.asset(
-                  AppAssets.Svgs.icProfile,
-                  width: 24,
-                  height: 24,
-                ),
+                SvgPicture.asset(AppAssets.icProfile, width: 24, height: 24),
               ],
             ),
-
             const SizedBox(height: 24),
 
             // Image Assets Example
@@ -60,7 +51,7 @@ class AssetUsageExamples extends StatelessWidget {
               children: [
                 // Using Image assets
                 Image.asset(
-                  AppAssets.Images.badgeBronze,
+                  AppAssets.badgeBronze,
                   width: 48,
                   height: 48,
                   errorBuilder: (context, error, stackTrace) {
@@ -80,7 +71,7 @@ class AssetUsageExamples extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
                 Image.asset(
-                  AppAssets.Images.badgeGold,
+                  AppAssets.badgeGold,
                   width: 48,
                   height: 48,
                   errorBuilder: (context, error, stackTrace) {
@@ -118,7 +109,7 @@ class AssetUsageExamples extends StatelessWidget {
                 border: Border.all(color: Colors.grey[300]!),
               ),
               child: Image.asset(
-                AppAssets.Images.onboardingWelcome,
+                AppAssets.onboardingWelcome,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return const Center(
@@ -153,7 +144,7 @@ class AssetUsageExamples extends StatelessWidget {
                     return Column(
                       children: [
                         Image.asset(
-                          AppAssets.Utils.getBadgeAsset(badgeType),
+                          AppAssets.getBadgeAsset(badgeType),
                           width: 32,
                           height: 32,
                           errorBuilder: (context, error, stackTrace) {
@@ -195,8 +186,8 @@ class AssetUsageExamples extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                image: const DecorationImage(
-                  image: AssetImage(AppAssets.Images.sampleTextDocument),
+                image: DecorationImage(
+                  image: AssetImage(AppAssets.sampleTextDocument),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -249,17 +240,17 @@ class AssetUsageExamples extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '// SVG Icon\nSvgPicture.asset(AppAssets.Svgs.icHome)',
+                    '// SVG Icon\nSvgPicture.asset(AppAssets.icHome)',
                     style: TextStyle(fontFamily: 'monospace', fontSize: 12),
                   ),
                   SizedBox(height: 8),
                   Text(
-                    '// Image Asset\nImage.asset(AppAssets.Images.badgeGold)',
+                    '// Image Asset\nImage.asset(AppAssets.badgeGold)',
                     style: TextStyle(fontFamily: 'monospace', fontSize: 12),
                   ),
                   SizedBox(height: 8),
                   Text(
-                    '// Background Image\nDecorationImage(\n  image: AssetImage(AppAssets.Images.onboardingWelcome)\n)',
+                    '// Background Image\nDecorationImage(\n  image: AssetImage(AppAssets.onboardingWelcome)\n)',
                     style: TextStyle(fontFamily: 'monospace', fontSize: 12),
                   ),
                 ],
@@ -281,8 +272,6 @@ class AssetUsageExamples extends StatelessWidget {
         return Colors.amber;
       case BadgeType.diamond:
         return Colors.cyan;
-      default:
-        return Colors.blue;
     }
   }
 }

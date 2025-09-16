@@ -1,148 +1,117 @@
-/// LexiQuest Asset Management
-/// Centralized asset path definitions for easy maintenance and refactoring
+/// Centralized asset path management for the LexiQuest app.
+///
+/// This class provides static constants for all asset paths used throughout
+/// the application, organized by type (images, SVGs, data files).
+///
+/// Example usage:
+/// ```dart
+/// Image.asset(AppAssets.logo)
+/// SvgPicture.asset(AppAssets.icHome)
+/// ```
 class AppAssets {
   // Private constructor to prevent instantiation
   AppAssets._();
-  
+
   // Base paths
   static const String _imagesPath = 'assets/images';
   static const String _svgsPath = 'assets/svgs';
   static const String _dataPath = 'assets/data';
-  
-  /// Image Assets
-  class Images {
-    Images._();
-    
-    // Icons
-    static const String _iconsPath = '$_imagesPath/icons';
-    
-    // Illustrations
-    static const String _illustrationsPath = '$_imagesPath/illustrations';
-    static const String onboardingWelcome = '$_illustrationsPath/onboarding_welcome.png';
-    static const String onboardingAnnotation = '$_illustrationsPath/onboarding_annotation.png';
-    static const String onboardingGamification = '$_illustrationsPath/onboarding_gamification.png';
-    static const String emptyStateAnnotations = '$_illustrationsPath/empty_state_annotations.png';
-    static const String emptyStateRewards = '$_illustrationsPath/empty_state_rewards.png';
-    
-    // Badges & Achievements
-    static const String _badgesPath = '$_imagesPath/badges';
-    static const String badgeBronze = '$_badgesPath/badge_bronze.png';
-    static const String badgeSilver = '$_badgesPath/badge_silver.png';
-    static const String badgeGold = '$_badgesPath/badge_gold.png';
-    static const String badgeDiamond = '$_badgesPath/badge_diamond.png';
-    static const String badgeFirstAnnotation = '$_badgesPath/badge_first_annotation.png';
-    static const String badgeStreakMaster = '$_badgesPath/badge_streak_master.png';
-    static const String badgeAiExpert = '$_badgesPath/badge_ai_expert.png';
-    
-    // Sample Annotation Images
-    static const String _annotationsPath = '$_imagesPath/annotations';
-    static const String sampleTextDocument = '$_annotationsPath/sample_text_document.png';
-    static const String sampleImage1 = '$_annotationsPath/sample_image_1.jpg';
-    static const String sampleImage2 = '$_annotationsPath/sample_image_2.jpg';
-    static const String sampleImageWithObjects = '$_annotationsPath/sample_image_with_objects.jpg';
-  }
-  
-  /// SVG Assets
-  class Svgs {
-    Svgs._();
-    
-    // Icons
-    static const String _iconsPath = '$_svgsPath/icons';
-    static const String icHome = '$_iconsPath/ic_home.svg';
-    static const String icAnnotation = '$_iconsPath/ic_annotation.svg';
-    static const String icProfile = '$_iconsPath/ic_profile.svg';
-    static const String icRewards = '$_iconsPath/ic_rewards.svg';
-    static const String icLeaderboard = '$_iconsPath/ic_leaderboard.svg';
-    static const String icHistory = '$_iconsPath/ic_history.svg';
-    static const String icAiAssist = '$_iconsPath/ic_ai_assist.svg';
-    static const String icManualAnnotation = '$_iconsPath/ic_manual_annotation.svg';
-    static const String icTextAnnotation = '$_iconsPath/ic_text_annotation.svg';
-    static const String icImageAnnotation = '$_iconsPath/ic_image_annotation.svg';
-    static const String icSettings = '$_iconsPath/ic_settings.svg';
-    static const String icLogout = '$_iconsPath/ic_logout.svg';
-    static const String icTheme = '$_iconsPath/ic_theme.svg';
-    
-    // Illustrations
-    static const String _illustrationsPath = '$_svgsPath/illustrations';
-    static const String illWelcome = '$_illustrationsPath/ill_welcome.svg';
-    static const String illAnnotationWorkspace = '$_illustrationsPath/ill_annotation_workspace.svg';
-    static const String illGamificationConcept = '$_illustrationsPath/ill_gamification_concept.svg';
-    static const String illEmptyAnnotations = '$_illustrationsPath/ill_empty_annotations.svg';
-    static const String illEmptyRewards = '$_illustrationsPath/ill_empty_rewards.svg';
-    static const String illSuccess = '$_illustrationsPath/ill_success.svg';
-    static const String illError = '$_illustrationsPath/ill_error.svg';
-  }
-  
-  /// Data Assets
-  class Data {
-    Data._();
-    
-    // Sample datasets
-    static const String sampleTextAnnotations = '$_dataPath/sample_text_annotations.json';
-    static const String sampleImageLabels = '$_dataPath/sample_image_labels.csv';
-    static const String mockUsers = '$_dataPath/mock_users.json';
-    static const String appConfig = '$_dataPath/app_config.json';
-    
-    // Annotation templates
-    static const String textAnnotationTemplate = '$_dataPath/text_annotation_template.json';
-    static const String imageAnnotationTemplate = '$_dataPath/image_annotation_template.json';
-  }
-  
-  /// Helper methods for asset management
-  class Utils {
-    Utils._();
-    
-    /// Get badge asset based on badge type
-    static String getBadgeAsset(BadgeType type) {
-      switch (type) {
-        case BadgeType.bronze:
-          return Images.badgeBronze;
-        case BadgeType.silver:
-          return Images.badgeSilver;
-        case BadgeType.gold:
-          return Images.badgeGold;
-        case BadgeType.diamond:
-          return Images.badgeDiamond;
-        case BadgeType.firstAnnotation:
-          return Images.badgeFirstAnnotation;
-        case BadgeType.streakMaster:
-          return Images.badgeStreakMaster;
-        case BadgeType.aiExpert:
-          return Images.badgeAiExpert;
-      }
+
+  // Logo
+  static const String logo = '$_imagesPath/logo.png';
+
+  // Badge assets
+  static const String badgeBronze = '$_imagesPath/badges/badge_bronze.png';
+  static const String badgeSilver = '$_imagesPath/badges/badge_silver.png';
+  static const String badgeGold = '$_imagesPath/badges/badge_gold.png';
+  static const String badgeDiamond = '$_imagesPath/badges/badge_diamond.png';
+
+  // Achievement icons
+  static const String achievementFirst =
+      '$_imagesPath/achievements/first_annotation.png';
+  static const String achievementSpeed =
+      '$_imagesPath/achievements/speed_annotator.png';
+  static const String achievementAccuracy =
+      '$_imagesPath/achievements/accuracy_expert.png';
+
+  // Onboarding images
+  static const String onboardingWelcome = '$_imagesPath/onboarding/welcome.png';
+  static const String onboardingAnnotation =
+      '$_imagesPath/onboarding/annotation_demo.png';
+  static const String onboardingProgress =
+      '$_imagesPath/onboarding/progress_tracking.png';
+
+  // Sample documents
+  static const String sampleTextDocument =
+      '$_imagesPath/samples/sample_text.png';
+  static const String samplePdfDocument = '$_imagesPath/samples/sample_pdf.png';
+
+  // SVG Icons - Navigation
+  static const String icHome = '$_svgsPath/icons/ic_home.svg';
+  static const String icAnnotation = '$_svgsPath/icons/ic_annotation.svg';
+  static const String icProfile = '$_svgsPath/icons/ic_profile.svg';
+  static const String icStatistics = '$_svgsPath/icons/ic_statistics.svg';
+  static const String icSettings = '$_svgsPath/icons/ic_settings.svg';
+
+  // SVG Icons - Actions
+  static const String icAdd = '$_svgsPath/icons/ic_add.svg';
+  static const String icEdit = '$_svgsPath/icons/ic_edit.svg';
+  static const String icDelete = '$_svgsPath/icons/ic_delete.svg';
+  static const String icSave = '$_svgsPath/icons/ic_save.svg';
+  static const String icShare = '$_svgsPath/icons/ic_share.svg';
+  static const String icDownload = '$_svgsPath/icons/ic_download.svg';
+
+  // SVG Icons - Interface
+  static const String icClose = '$_svgsPath/icons/ic_close.svg';
+  static const String icBack = '$_svgsPath/icons/ic_back.svg';
+  static const String icNext = '$_svgsPath/icons/ic_next.svg';
+  static const String icSearch = '$_svgsPath/icons/ic_search.svg';
+  static const String icFilter = '$_svgsPath/icons/ic_filter.svg';
+  static const String icSort = '$_svgsPath/icons/ic_sort.svg';
+
+  // Illustrations
+  static const String illEmptyState =
+      '$_svgsPath/illustrations/empty_state.svg';
+  static const String illError = '$_svgsPath/illustrations/error.svg';
+  static const String illSuccess = '$_svgsPath/illustrations/success.svg';
+  static const String illLoading = '$_svgsPath/illustrations/loading.svg';
+
+  // Data files
+  static const String sampleAnnotations = '$_dataPath/sample_annotations.json';
+  static const String achievementsData = '$_dataPath/achievements.json';
+  static const String levelsData = '$_dataPath/levels.json';
+
+  // Helper methods
+
+  /// Returns the appropriate badge asset based on the badge type
+  static String getBadgeAsset(BadgeType type) {
+    switch (type) {
+      case BadgeType.bronze:
+        return badgeBronze;
+      case BadgeType.silver:
+        return badgeSilver;
+      case BadgeType.gold:
+        return badgeGold;
+      case BadgeType.diamond:
+        return badgeDiamond;
     }
-    
-    /// Get annotation type icon
-    static String getAnnotationIcon(AnnotationType type) {
-      switch (type) {
-        case AnnotationType.text:
-          return Svgs.icTextAnnotation;
-        case AnnotationType.image:
-          return Svgs.icImageAnnotation;
-        case AnnotationType.manual:
-          return Svgs.icManualAnnotation;
-        case AnnotationType.aiAssisted:
-          return Svgs.icAiAssist;
-      }
+  }
+
+  /// Returns the appropriate achievement icon based on achievement type
+  static String getAchievementAsset(AchievementType type) {
+    switch (type) {
+      case AchievementType.firstAnnotation:
+        return achievementFirst;
+      case AchievementType.speedAnnotator:
+        return achievementSpeed;
+      case AchievementType.accuracyExpert:
+        return achievementAccuracy;
     }
   }
 }
 
-/// Badge types for the gamification system
-enum BadgeType {
-  bronze,
-  silver,
-  gold,
-  diamond,
-  firstAnnotation,
-  streakMaster,
-  aiExpert,
-}
+/// Enum for badge types
+enum BadgeType { bronze, silver, gold, diamond }
 
-/// Annotation types for the app
-enum AnnotationType {
-  text,
-  image,
-  manual,
-  aiAssisted,
-}
+/// Enum for achievement types
+enum AchievementType { firstAnnotation, speedAnnotator, accuracyExpert }
