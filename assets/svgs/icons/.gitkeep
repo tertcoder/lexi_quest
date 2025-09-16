@@ -1,0 +1,34 @@
+# Placeholder for SVG Icons
+
+Place your scalable vector icons here:
+
+## Recommended icons:
+
+- `ic_home.svg` - Home navigation
+- `ic_annotation.svg` - Annotation feature
+- `ic_profile.svg` - User profile
+- `ic_rewards.svg` - Rewards system
+- `ic_leaderboard.svg` - Leaderboard
+- `ic_ai_assist.svg` - AI assistance
+- `ic_manual_annotation.svg` - Manual annotation mode
+- `ic_text_annotation.svg` - Text annotation
+- `ic_image_annotation.svg` - Image annotation
+
+## SVG Benefits:
+
+- Scalable to any size
+- Small file sizes
+- Can be colored programmatically
+- Crisp on all screen densities
+
+## Design guidelines:
+
+- Outline style preferred
+- 24x24 dp design canvas
+- 2dp stroke width
+- Rounded line caps and joins
+- Minimal and clean design
+
+## Note:
+
+Remember to add flutter_svg dependency to pubspec.yaml for SVG support

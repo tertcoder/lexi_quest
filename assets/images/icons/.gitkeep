@@ -1,0 +1,24 @@
+# Placeholder for App Icons
+
+Place your app icons here:
+
+## Recommended icons:
+
+- `ic_home.png` - Home/Dashboard navigation icon
+- `ic_annotation.png` - Annotation feature icon
+- `ic_profile.png` - User profile icon
+- `ic_rewards.png` - Rewards/gamification icon
+- `ic_leaderboard.png` - Leaderboard icon
+- `ic_history.png` - Annotation history icon
+- `ic_settings.png` - Settings icon
+
+## Size recommendations:
+
+- 24x24 dp (72x72 px @3x)
+- 32x32 dp (96x96 px @3x)
+- 48x48 dp (144x144 px @3x)
+
+## Format:
+
+- PNG with transparency for colored icons
+- SVG preferred for better scalability

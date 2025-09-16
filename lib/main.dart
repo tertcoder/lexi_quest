@@ -209,21 +209,30 @@ class _ThemePreviewScreenState extends State<ThemePreviewScreen> {
                         runSpacing: 8,
                         children: [
                           Chip(
-                            label: const Text('Text Annotation'),
+                            label: Text(
+                              'Text Annotation',
+                              style: AppFonts.labelLarge,
+                            ),
                             avatar: CircleAvatar(
                               backgroundColor: AppColors.secondaryGreen500,
                               child: const Text('T'),
                             ),
                           ),
                           Chip(
-                            label: const Text('Image Labeling'),
+                            label: Text(
+                              'Image Labeling',
+                              style: AppFonts.labelLarge,
+                            ),
                             avatar: CircleAvatar(
                               backgroundColor: AppColors.secondaryAmber500,
                               child: const Text('I'),
                             ),
                           ),
                           ActionChip(
-                            label: const Text('AI Assist'),
+                            label: Text(
+                              'AI Assist',
+                              style: AppFonts.labelLarge,
+                            ),
                             onPressed: () {},
                             avatar: const Icon(Icons.smart_toy, size: 18),
                           ),

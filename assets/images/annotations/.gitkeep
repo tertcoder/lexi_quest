@@ -1,0 +1,30 @@
+# Placeholder for Sample Annotation Images
+
+Place sample images for annotation practice here:
+
+## Image Types:
+
+- `sample_image_1.jpg` - General object detection sample
+- `sample_image_2.jpg` - Text detection sample
+- `sample_image_with_objects.jpg` - Multi-object annotation sample
+- `sample_text_document.png` - Document with text for annotation
+
+## Requirements:
+
+- High quality, clear images
+- Variety of subjects (objects, people, text, scenes)
+- Good contrast and lighting
+- Appropriate for educational use
+- Copyright-free or properly licensed
+
+## Formats:
+
+- JPG for photographs
+- PNG for screenshots/documents with text
+- WebP for optimized web delivery
+
+## Size guidelines:
+
+- Max width: 1920px
+- Optimized file sizes for mobile
+- Consider multiple resolutions for different devices
