@@ -106,6 +106,7 @@ class LoginScreen extends StatelessWidget {
                                 onPressed: () {
                                   // TODO: Implement login logic
                                   debugPrint("Sign In pressed");
+                                  AppRoutes.navigateToHome(context);
                                 },
                               ),
                               SizedBox(height: 12),

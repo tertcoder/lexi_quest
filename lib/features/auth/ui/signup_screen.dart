@@ -7,6 +7,7 @@ import 'package:lexi_quest/core/widgets/app_input_field.dart';
 import 'package:lexi_quest/core/widgets/primary_button.dart';
 import 'package:lexi_quest/features/auth/ui/widgets/logo_header.dart';
 import 'package:lexi_quest/features/auth/ui/widgets/positioned_liney.dart';
+import 'package:lexi_quest/routes.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -114,6 +115,7 @@ class SignUpScreen extends StatelessWidget {
                                 onPressed: () {
                                   // TODO: Implement sign up logic
                                   debugPrint("Create Account pressed");
+                                  AppRoutes.navigateToHome(context);
                                 },
                               ),
                               SizedBox(height: 12),
@@ -230,7 +232,7 @@ class SignUpScreen extends StatelessWidget {
                                             ),
                                             TextSpan(
                                               text: "Sign in",
-                                              style: AppFonts.bodyMedium
+                                              style: AppFonts.labelLarge
                                                   .copyWith(
                                                     color:
                                                         AppColors.onBackground,

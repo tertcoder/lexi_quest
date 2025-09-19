@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/features/auth/ui/login_screen.dart';
 import 'package:lexi_quest/features/auth/ui/signup_screen.dart';
+import 'package:lexi_quest/features/home/ui/home_screen.dart';
 import 'features/auth/ui/welcome_screen.dart';
 import 'core/widgets/theme_preview_screen.dart';
 
@@ -46,10 +47,7 @@ class AppRoutes {
       GoRoute(
         path: home,
         name: 'home',
-        builder:
-            (context, state) => const Scaffold(
-              body: Center(child: Text('Home Screen - Coming Soon')),
-            ),
+        builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
         path: profile,

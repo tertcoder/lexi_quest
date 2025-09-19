@@ -42,6 +42,7 @@ class AppAssets {
       '$_imagesPath/onboarding/progress_tracking.png';
 
   // Sample documents
+  static const String defaultProfile = '$_imagesPath/default_profile.png';
   static const String sampleTextDocument =
       '$_imagesPath/samples/sample_text.png';
   static const String samplePdfDocument = '$_imagesPath/samples/sample_pdf.png';
@@ -73,6 +74,7 @@ class AppAssets {
   static const String icSearch = '$_svgsPath/icons/ic_search.svg';
   static const String icFilter = '$_svgsPath/icons/ic_filter.svg';
   static const String icSort = '$_svgsPath/icons/ic_sort.svg';
+  static const String icBell = '$_svgsPath/icons/ic_bell.svg';
 
   // Illustrations
   static const String illEmptyState =
