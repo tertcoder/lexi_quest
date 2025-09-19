@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/utils/app_assets.dart';
@@ -8,10 +7,9 @@ import 'package:lexi_quest/core/widgets/app_input_field.dart';
 import 'package:lexi_quest/core/widgets/primary_button.dart';
 import 'package:lexi_quest/features/auth/ui/widgets/logo_header.dart';
 import 'package:lexi_quest/features/auth/ui/widgets/positioned_liney.dart';
-import 'package:lexi_quest/routes.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatelessWidget {
+  const SignUpScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +74,7 @@ class LoginScreen extends StatelessWidget {
                           child: Column(
                             children: [
                               Text(
-                                "Welcome Back!",
+                                "Create Account",
                                 style: AppFonts.headlineMedium.copyWith(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.bold,
@@ -84,7 +82,7 @@ class LoginScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                "Get connected to your account and start annotating, validating and earn XP ",
+                                "Join LexiQuest and start your annotation journey to earn XP and unlock achievements",
                                 style: AppFonts.bodyMedium.copyWith(
                                   color: AppColors.onBackground,
                                 ),
@@ -92,20 +90,30 @@ class LoginScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 32),
                               AppInputField(
+                                placeholder: "Your Full Name",
+                                keyboardType: TextInputType.name,
+                              ),
+                              SizedBox(height: 12),
+                              AppInputField(
                                 placeholder: "Your Email",
                                 keyboardType: TextInputType.emailAddress,
                               ),
                               SizedBox(height: 12),
                               AppInputField(
-                                placeholder: "Your Password",
+                                placeholder: "Create Password",
                                 isPassword: true,
                               ),
                               SizedBox(height: 12),
+                              AppInputField(
+                                placeholder: "Confirm Password",
+                                isPassword: true,
+                              ),
+                              SizedBox(height: 20),
                               PrimaryButton(
-                                text: "Sign In",
+                                text: "Create Account",
                                 onPressed: () {
-                                  // TODO: Implement login logic
-                                  debugPrint("Sign In pressed");
+                                  // TODO: Implement sign up logic
+                                  debugPrint("Create Account pressed");
                                 },
                               ),
                               SizedBox(height: 12),
@@ -126,7 +134,7 @@ class LoginScreen extends StatelessWidget {
                                         horizontal: 16.0,
                                       ),
                                       child: Text(
-                                        "Or continue with",
+                                        "Or sign up with",
                                         style: AppFonts.bodySmall.copyWith(
                                           color: AppColors.onSurfaceVariant,
                                         ),
@@ -147,7 +155,7 @@ class LoginScreen extends StatelessWidget {
                                   // Google Button
                                   GestureDetector(
                                     onTap: () {
-                                      debugPrint("Google login pressed");
+                                      debugPrint("Google sign up pressed");
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
@@ -167,7 +175,7 @@ class LoginScreen extends StatelessWidget {
                                   // Facebook Button
                                   GestureDetector(
                                     onTap: () {
-                                      debugPrint("Facebook login pressed");
+                                      debugPrint("Facebook sign up pressed");
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
@@ -186,11 +194,11 @@ class LoginScreen extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              // Sign Up Container
+                              // Sign In Container
                               GestureDetector(
                                 onTap: () {
-                                  debugPrint("Sign up pressed");
-                                  context.push(AppRoutes.register);
+                                  debugPrint("Sign in pressed");
+                                  Navigator.of(context).pop();
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
@@ -212,8 +220,7 @@ class LoginScreen extends StatelessWidget {
                                         text: TextSpan(
                                           children: [
                                             TextSpan(
-                                              text:
-                                                  "Don't have an account yet? ",
+                                              text: "Already have an account? ",
                                               style: AppFonts.bodyMedium
                                                   .copyWith(
                                                     color:
@@ -222,8 +229,8 @@ class LoginScreen extends StatelessWidget {
                                                   ),
                                             ),
                                             TextSpan(
-                                              text: "Sign up",
-                                              style: AppFonts.labelLarge
+                                              text: "Sign in",
+                                              style: AppFonts.bodyMedium
                                                   .copyWith(
                                                     color:
                                                         AppColors.onBackground,

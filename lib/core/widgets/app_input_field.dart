@@ -131,8 +131,6 @@ class _AppInputFieldState extends State<AppInputField> {
                   ? IconButton(
                     icon: SvgPicture.asset(
                       _obscureText ? AppAssets.icEyeClosed : AppAssets.icEye,
-                      width: 20,
-                      height: 20,
                       colorFilter: const ColorFilter.mode(
                         AppColors.neutralSlate600_70,
                         BlendMode.srcIn,
