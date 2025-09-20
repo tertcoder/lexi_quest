@@ -65,6 +65,10 @@ class AppAssets {
   static const String icEyeClosed = '$_svgsPath/icons/ic_eye_closed.svg';
   static const String icGoogle = '$_svgsPath/icons/ic_google.svg';
   static const String icFacebook = '$_svgsPath/icons/ic_facebook.svg';
+  static const String icAudio = '$_svgsPath/icons/ic_audio.svg';
+  static const String icText = '$_svgsPath/icons/ic_text.svg';
+  static const String icImage = '$_svgsPath/icons/ic_image.svg';
+  static const String icLeaderboard = '$_svgsPath/icons/ic_leaderboard.svg';
 
   // SVG Icons - Interface
   static const String icClose = '$_svgsPath/icons/ic_close.svg';
