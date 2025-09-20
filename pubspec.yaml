@@ -44,6 +44,12 @@ dependencies:
   # GoRouter for declarative routing
   go_router: ^14.6.1
 
+  # State management with BLoC pattern
+  flutter_bloc: ^8.1.6
+
+  # Value equality for Dart objects
+  equatable: ^2.0.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

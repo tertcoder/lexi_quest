@@ -123,4 +123,9 @@ class AppFonts {
     height: 1.40,
     letterSpacing: 1.5,
   );
+
+  // Additional font aliases for new UI components
+  static TextStyle get heading1 => headlineLarge;
+  static TextStyle get heading2 => headlineMedium;
+  static TextStyle get heading3 => headlineSmall;
 }

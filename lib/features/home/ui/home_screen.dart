@@ -4,6 +4,7 @@ import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/utils/app_assets.dart';
 import 'package:lexi_quest/core/widgets/stat_card.dart';
+import 'package:lexi_quest/core/widgets/main_navigation_shell.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -220,7 +221,15 @@ class HomeScreen extends StatelessWidget {
                         GestureDetector(
                           onTap: () {
                             debugPrint("Audio Annotation tapped");
-                            // TODO: Navigate to audio annotation
+                            // Navigate to annotation tab
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const MainNavigationShell(
+                                      initialIndex: 1,
+                                    ),
+                              ),
+                            );
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -257,7 +266,15 @@ class HomeScreen extends StatelessWidget {
                         GestureDetector(
                           onTap: () {
                             debugPrint("Text Annotation tapped");
-                            // TODO: Navigate to text annotation
+                            // Navigate to annotation tab
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const MainNavigationShell(
+                                      initialIndex: 1,
+                                    ),
+                              ),
+                            );
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -301,7 +318,15 @@ class HomeScreen extends StatelessWidget {
                         GestureDetector(
                           onTap: () {
                             debugPrint("Image Annotation tapped");
-                            // TODO: Navigate to image annotation
+                            // Navigate to annotation tab
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const MainNavigationShell(
+                                      initialIndex: 1,
+                                    ),
+                              ),
+                            );
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -338,7 +363,15 @@ class HomeScreen extends StatelessWidget {
                         GestureDetector(
                           onTap: () {
                             debugPrint("Leaderboard tapped");
-                            // TODO: Navigate to leaderboard
+                            // Navigate to rewards tab (contains leaderboard)
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const MainNavigationShell(
+                                      initialIndex: 2,
+                                    ),
+                              ),
+                            );
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(

@@ -43,4 +43,16 @@ class AppColors {
   static const Color onBackground = neutralSlate900;
   static const Color onSurface = neutralSlate900;
   static const Color onSurfaceVariant = neutralSlate600;
+
+  // Additional color aliases for new UI components
+  static const Color backgroundColor = neutralWhite;
+  static const Color cardBackground = neutralSlate50;
+  static const Color primaryColor = primaryIndigo600;
+  static const Color accentColor = primaryIndigo500;
+  static const Color successColor = secondaryGreen500;
+  static const Color warningColor = secondaryAmber500;
+  static const Color errorColor = secondaryRed500;
+  static const Color textPrimary = neutralSlate900;
+  static const Color textSecondary = neutralSlate600;
+  static const Color borderColor = neutralSlate600_30;
 }

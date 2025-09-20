@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/features/auth/ui/login_screen.dart';
 import 'package:lexi_quest/features/auth/ui/signup_screen.dart';
-import 'package:lexi_quest/features/home/ui/home_screen.dart';
+import 'package:lexi_quest/core/widgets/main_navigation_shell.dart';
 import 'features/auth/ui/welcome_screen.dart';
 import 'core/widgets/theme_preview_screen.dart';
 
@@ -13,8 +13,10 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String home = '/home';
-  static const String profile = '/profile';
+  static const String main = '/main';
   static const String annotation = '/annotation';
+  static const String rewards = '/rewards';
+  static const String profile = '/profile';
   static const String statistics = '/statistics';
   static const String settings = '/settings';
   static const String themePreview = '/theme-preview'; // Debug route
@@ -47,7 +49,16 @@ class AppRoutes {
       GoRoute(
         path: home,
         name: 'home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const MainNavigationShell(initialIndex: 0),
+      ),
+      GoRoute(
+        path: main,
+        name: 'main',
+        builder: (context, state) {
+          final indexParam = state.uri.queryParameters['index'];
+          final index = indexParam != null ? int.tryParse(indexParam) ?? 0 : 0;
+          return MainNavigationShell(initialIndex: index);
+        },
       ),
       GoRoute(
         path: profile,
@@ -124,7 +135,7 @@ class AppRoutes {
   }
 
   static void navigateToHome(BuildContext context) {
-    context.go(home);
+    context.go(main);
   }
 
   static void navigateToProfile(BuildContext context) {
