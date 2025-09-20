@@ -21,10 +21,10 @@ class AppAssets {
   static const String logo = '$_imagesPath/logo.png';
 
   // Badge assets
-  static const String badgeBronze = '$_imagesPath/badges/badge_bronze.png';
-  static const String badgeSilver = '$_imagesPath/badges/badge_silver.png';
-  static const String badgeGold = '$_imagesPath/badges/badge_gold.png';
-  static const String badgeDiamond = '$_imagesPath/badges/badge_diamond.png';
+  static const String badgeBronze = '$_svgsPath/badges/badge_bronze.svg';
+  static const String badgeSilver = '$_svgsPath/badges/badge_silver.svg';
+  static const String badgeGold = '$_svgsPath/badges/badge_gold.svg';
+  static const String badgeDiamond = '$_svgsPath/badges/badge_diamond.svg';
 
   // Achievement icons
   static const String achievementFirst =
@@ -82,6 +82,8 @@ class AppAssets {
   static const String illError = '$_svgsPath/illustrations/error.svg';
   static const String illSuccess = '$_svgsPath/illustrations/success.svg';
   static const String illLoading = '$_svgsPath/illustrations/loading.svg';
+  static const String illStreak = '$_svgsPath/illustrations/streak.svg';
+  static const String illXp = '$_svgsPath/illustrations/xp.svg';
   static const String illLiney = '$_imagesPath/illustrations/liney.png';
   static const String illLineWave = '$_imagesPath/illustrations/line_wave.png';
 

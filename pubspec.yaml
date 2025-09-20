@@ -71,12 +71,12 @@ flutter:
     - assets/images/
     - assets/images/icons/
     - assets/images/illustrations/
-    - assets/images/badges/
     - assets/images/annotations/
 
     # SVG graphics
     - assets/svgs/
     - assets/svgs/icons/
+    - assets/svgs/badges/
     - assets/svgs/illustrations/
 
     # Data files

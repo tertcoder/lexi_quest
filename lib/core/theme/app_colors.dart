@@ -23,6 +23,7 @@ class AppColors {
   static const Color neutralSlate600_70 = Color(0xB3475569); // 70% opacity
   static const Color neutralSlate600_30 = Color(0x4D475569); // 30% opacity
   static const Color neutralSlate900_25 = Color(0x400F172A); // 25% opacity
+  static const Color neutralSlate50_70 = Color(0xB3F8FAFC); // 70% opacity
   static const Color neutralSlate50_10 = Color(0x1AF8FAFC); // 10% opacity
 
   // Semantic Colors (mapped to primary/secondary for consistency)
