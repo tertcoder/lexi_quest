@@ -103,131 +103,102 @@ class HomeScreen extends StatelessWidget {
 
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primaryIndigo600, AppColors.primaryIndigo500],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryIndigo600.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.neutralSlate900_25),
                 ),
                 child: Column(
                   children: [
-                    // Top Stats Row
                     Row(
                       children: [
                         Expanded(
-                          child: _buildModernStatCard(
-                            icon: Icons.local_fire_department,
-                            iconColor: AppColors.secondaryAmber500,
+                          child: StatCard(
+                            iconPath: AppAssets.illStreak,
                             number: "1,250",
                             label: "Streaks Day",
-                            backgroundColor: AppColors.primaryIndigo500,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 14),
                         Expanded(
-                          child: _buildModernStatCard(
-                            icon: Icons.stars_rounded,
-                            iconColor: AppColors.secondaryGreen500,
+                          child: StatCard(
+                            iconPath: AppAssets.illXp,
                             number: "8,750",
                             label: "Total XP",
-                            backgroundColor: AppColors.primaryIndigo500,
+                            numberColor: AppColors.secondaryGreen500,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    
-                    // Level Progress Card
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.neutralWhite,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.neutralSlate900_25.withValues(alpha: 0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        color: AppColors.background,
+                        border: Border.all(color: AppColors.neutralSlate900_25),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
-                          // Trophy Icon
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: AppColors.secondaryAmber500.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.emoji_events,
-                              color: AppColors.secondaryAmber500,
-                              size: 32,
-                            ),
+                          SvgPicture.asset(
+                            AppAssets.badgeBronze,
+                            width: 40,
+                            height: 40,
                           ),
-                          const SizedBox(width: 12),
-                          
-                          // Level Info
+                          const SizedBox(width: 4),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 "01",
-                                style: AppFonts.headlineLarge.copyWith(
+                                style: AppFonts.headlineMedium.copyWith(
                                   color: AppColors.secondaryAmber500,
                                   fontWeight: FontWeight.w900,
                                   height: 1,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 4),
                               Text(
                                 "Level",
-                                style: AppFonts.bodySmall.copyWith(
-                                  color: AppColors.onSurfaceVariant,
+                                style: AppFonts.bodyMedium.copyWith(
+                                  color: AppColors.neutralSlate600_70,
                                   fontWeight: FontWeight.w600,
+                                  height: 1,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(width: 16),
-                          
-                          // Progress Bar
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  "50%",
-                                  style: AppFonts.titleMedium.copyWith(
-                                    color: AppColors.secondaryGreen500,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: LinearProgressIndicator(
-                                    value: 0.5,
-                                    minHeight: 12,
-                                    backgroundColor: AppColors.neutralSlate600_30,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(
-                                      AppColors.secondaryGreen500,
+                            child: Container(
+                              height: 48,
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: AppColors.onSurfaceVariant,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: 110,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.secondaryGreen500,
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Center(
+                                    child: Text(
+                                      "50%",
+                                      style: AppFonts.titleMedium.copyWith(
+                                        color: AppColors.onPrimary,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -479,52 +450,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildModernStatCard({
-    required IconData icon,
-    required Color iconColor,
-    required String number,
-    required String label,
-    required Color backgroundColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.neutralWhite.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: iconColor,
-            size: 32,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            number,
-            style: AppFonts.headlineMedium.copyWith(
-              color: AppColors.neutralWhite,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: AppFonts.bodySmall.copyWith(
-              color: AppColors.neutralWhite.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }
