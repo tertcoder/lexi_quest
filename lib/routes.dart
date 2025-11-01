@@ -3,6 +3,16 @@ import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/features/auth/ui/login_screen.dart';
 import 'package:lexi_quest/features/auth/ui/signup_screen.dart';
 import 'package:lexi_quest/features/home/ui/home_screen.dart';
+import 'package:lexi_quest/features/annotation/ui/text_annotation_screen.dart';
+import 'package:lexi_quest/features/annotation/ui/image_annotation_screen.dart';
+import 'package:lexi_quest/features/annotation/ui/audio_annotation_screen.dart';
+import 'package:lexi_quest/features/leaderboard/ui/leaderboard_screen.dart';
+import 'package:lexi_quest/features/profile/ui/profile_screen.dart';
+import 'package:lexi_quest/features/settings/ui/settings_screen.dart';
+import 'package:lexi_quest/features/projects/ui/projects_screen.dart';
+import 'package:lexi_quest/features/projects/ui/project_details_screen.dart';
+import 'package:lexi_quest/features/projects/ui/create_project_screen.dart';
+import 'package:lexi_quest/core/widgets/main_navigation.dart';
 import 'features/auth/ui/welcome_screen.dart';
 import 'core/widgets/theme_preview_screen.dart';
 
@@ -13,15 +23,23 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String home = '/home';
+  static const String mainNav = '/main';
   static const String profile = '/profile';
+  static const String leaderboard = '/leaderboard';
+  static const String projects = '/projects';
+  static const String projectDetails = '/projects/details';
+  static const String createProject = '/projects/create';
   static const String annotation = '/annotation';
+  static const String textAnnotation = '/annotation/text';
+  static const String imageAnnotation = '/annotation/image';
+  static const String audioAnnotation = '/annotation/audio';
   static const String statistics = '/statistics';
   static const String settings = '/settings';
   static const String themePreview = '/theme-preview'; // Debug route
 
   /// GoRouter configuration
   static final GoRouter router = GoRouter(
-    initialLocation: welcome,
+    initialLocation: mainNav, // Start with main navigation after development
     debugLogDiagnostics: true,
     routes: [
       GoRoute(
@@ -50,20 +68,80 @@ class AppRoutes {
         builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
+        path: mainNav,
+        name: 'main',
+        builder: (context, state) => const MainNavigation(),
+      ),
+      GoRoute(
         path: profile,
         name: 'profile',
-        builder:
-            (context, state) => const Scaffold(
-              body: Center(child: Text('Profile Screen - Coming Soon')),
-            ),
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: leaderboard,
+        name: 'leaderboard',
+        builder: (context, state) => const LeaderboardScreen(),
+      ),
+      GoRoute(
+        path: projects,
+        name: 'projects',
+        builder: (context, state) => const ProjectsScreen(),
+      ),
+      GoRoute(
+        path: '$projectDetails/:id',
+        name: 'project-details',
+        builder: (context, state) {
+          final projectId = state.pathParameters['id']!;
+          return ProjectDetailsScreen(projectId: projectId);
+        },
+      ),
+      GoRoute(
+        path: createProject,
+        name: 'create-project',
+        builder: (context, state) => const CreateProjectScreen(),
       ),
       GoRoute(
         path: annotation,
         name: 'annotation',
-        builder:
-            (context, state) => const Scaffold(
-              body: Center(child: Text('Annotation Screen - Coming Soon')),
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('Select Annotation Type')),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => context.push(textAnnotation),
+                  child: const Text('Text Annotation'),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.push(imageAnnotation),
+                  child: const Text('Image Annotation'),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.push(audioAnnotation),
+                  child: const Text('Audio Annotation'),
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: textAnnotation,
+        name: 'text-annotation',
+        builder: (context, state) => const TextAnnotationScreen(),
+      ),
+      GoRoute(
+        path: imageAnnotation,
+        name: 'image-annotation',
+        builder: (context, state) => const ImageAnnotationScreen(),
+      ),
+      GoRoute(
+        path: audioAnnotation,
+        name: 'audio-annotation',
+        builder: (context, state) => const AudioAnnotationScreen(),
       ),
       GoRoute(
         path: statistics,
@@ -76,10 +154,7 @@ class AppRoutes {
       GoRoute(
         path: settings,
         name: 'settings',
-        builder:
-            (context, state) => const Scaffold(
-              body: Center(child: Text('Settings Screen - Coming Soon')),
-            ),
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
     errorBuilder:
@@ -127,12 +202,32 @@ class AppRoutes {
     context.go(home);
   }
 
+  static void navigateToMainNav(BuildContext context) {
+    context.go(mainNav);
+  }
+
   static void navigateToProfile(BuildContext context) {
     context.push(profile);
   }
 
+  static void navigateToLeaderboard(BuildContext context) {
+    context.push(leaderboard);
+  }
+
   static void navigateToAnnotation(BuildContext context) {
     context.push(annotation);
+  }
+
+  static void navigateToTextAnnotation(BuildContext context) {
+    context.push(textAnnotation);
+  }
+
+  static void navigateToImageAnnotation(BuildContext context) {
+    context.push(imageAnnotation);
+  }
+
+  static void navigateToAudioAnnotation(BuildContext context) {
+    context.push(audioAnnotation);
   }
 
   static void navigateToStatistics(BuildContext context) {
@@ -164,12 +259,32 @@ class AppRoutes {
     context.goNamed('home');
   }
 
+  static void navigateToMainNavNamed(BuildContext context) {
+    context.goNamed('main');
+  }
+
   static void navigateToProfileNamed(BuildContext context) {
     context.pushNamed('profile');
   }
 
+  static void navigateToLeaderboardNamed(BuildContext context) {
+    context.pushNamed('leaderboard');
+  }
+
   static void navigateToAnnotationNamed(BuildContext context) {
     context.pushNamed('annotation');
+  }
+
+  static void navigateToTextAnnotationNamed(BuildContext context) {
+    context.pushNamed('text-annotation');
+  }
+
+  static void navigateToImageAnnotationNamed(BuildContext context) {
+    context.pushNamed('image-annotation');
+  }
+
+  static void navigateToAudioAnnotationNamed(BuildContext context) {
+    context.pushNamed('audio-annotation');
   }
 
   static void navigateToStatisticsNamed(BuildContext context) {
@@ -178,5 +293,9 @@ class AppRoutes {
 
   static void navigateToSettingsNamed(BuildContext context) {
     context.pushNamed('settings');
+  }
+
+  static void navigateToThemePreviewNamed(BuildContext context) {
+    context.pushNamed('theme-preview');
   }
 }

@@ -74,22 +74,52 @@ class SignUpScreen extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              Text(
-                                "Create Account",
-                                style: AppFonts.headlineMedium.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
+                              // Welcome Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryIndigo600.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.rocket_launch,
+                                      color: AppColors.primaryIndigo600,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Start Your Journey",
+                                      style: AppFonts.labelMedium.copyWith(
+                                        color: AppColors.primaryIndigo600,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 16),
                               Text(
-                                "Join LexiQuest and start your annotation journey to earn XP and unlock achievements",
+                                "Create Account",
+                                style: AppFonts.headlineLarge.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Join LexiQuest and start earning XP, unlocking achievements, and contributing to amazing projects",
                                 style: AppFonts.bodyMedium.copyWith(
-                                  color: AppColors.onBackground,
+                                  color: AppColors.onSurfaceVariant,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              SizedBox(height: 32),
+                              const SizedBox(height: 32),
                               AppInputField(
                                 placeholder: "Your Full Name",
                                 keyboardType: TextInputType.name,
@@ -109,7 +139,38 @@ class SignUpScreen extends StatelessWidget {
                                 placeholder: "Confirm Password",
                                 isPassword: true,
                               ),
-                              SizedBox(height: 20),
+                              const SizedBox(height: 24),
+                              // Terms checkbox
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: AppColors.primaryIndigo600,
+                                        width: 2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Icon(
+                                      Icons.check,
+                                      size: 14,
+                                      color: AppColors.primaryIndigo600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      "I agree to Terms & Conditions and Privacy Policy",
+                                      style: AppFonts.bodySmall.copyWith(
+                                        color: AppColors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
                               PrimaryButton(
                                 text: "Create Account",
                                 onPressed: () {

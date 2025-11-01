@@ -1,0 +1,98 @@
+{
+  "text_annotations": [
+    {
+      "id": "text_001",
+      "type": "text",
+      "content": "The quick brown fox jumps over the lazy dog. This sentence contains every letter of the English alphabet at least once.",
+      "labels": ["Noun", "Verb", "Adjective", "Adverb"],
+      "metadata": {
+        "difficulty": "easy",
+        "category": "grammar"
+      },
+      "createdAt": "2024-10-30T10:00:00Z",
+      "xpReward": 15
+    },
+    {
+      "id": "text_002",
+      "type": "text",
+      "content": "Machine learning is a subset of artificial intelligence that focuses on the development of algorithms that can learn from and make predictions on data.",
+      "labels": ["Technical Term", "Definition", "Concept"],
+      "metadata": {
+        "difficulty": "medium",
+        "category": "technology"
+      },
+      "createdAt": "2024-10-30T10:05:00Z",
+      "xpReward": 20
+    },
+    {
+      "id": "text_003",
+      "type": "text",
+      "content": "Climate change refers to long-term shifts in temperatures and weather patterns. These shifts may be natural, but since the 1800s, human activities have been the main driver.",
+      "labels": ["Scientific Term", "Cause", "Effect"],
+      "metadata": {
+        "difficulty": "medium",
+        "category": "science"
+      },
+      "createdAt": "2024-10-30T10:10:00Z",
+      "xpReward": 20
+    }
+  ],
+  "image_annotations": [
+    {
+      "id": "image_001",
+      "type": "image",
+      "content": "Identify and label objects in the street scene",
+      "imageUrl": "https://images.unsplash.com/photo-1449824913935-59a10b8d2000",
+      "labels": ["Car", "Person", "Building", "Tree", "Road"],
+      "metadata": {
+        "difficulty": "easy",
+        "category": "object_detection"
+      },
+      "createdAt": "2024-10-30T10:15:00Z",
+      "xpReward": 25
+    },
+    {
+      "id": "image_002",
+      "type": "image",
+      "content": "Label all visible animals in this wildlife photo",
+      "imageUrl": "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7",
+      "labels": ["Lion", "Zebra", "Elephant", "Giraffe"],
+      "metadata": {
+        "difficulty": "medium",
+        "category": "wildlife"
+      },
+      "createdAt": "2024-10-30T10:20:00Z",
+      "xpReward": 30
+    }
+  ],
+  "audio_annotations": [
+    {
+      "id": "audio_001",
+      "type": "audio",
+      "content": "Transcribe the spoken sentence",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "labels": ["Speech", "Transcription"],
+      "metadata": {
+        "difficulty": "easy",
+        "duration": "5s",
+        "category": "speech_recognition"
+      },
+      "createdAt": "2024-10-30T10:25:00Z",
+      "xpReward": 20
+    },
+    {
+      "id": "audio_002",
+      "type": "audio",
+      "content": "Identify the musical instruments in this clip",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      "labels": ["Piano", "Guitar", "Drums", "Violin"],
+      "metadata": {
+        "difficulty": "medium",
+        "duration": "10s",
+        "category": "audio_classification"
+      },
+      "createdAt": "2024-10-30T10:30:00Z",
+      "xpReward": 25
+    }
+  ]
+}

@@ -1,0 +1,704 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lexi_quest/core/theme/app_colors.dart';
+import 'package:lexi_quest/core/theme/app_fonts.dart';
+import 'package:lexi_quest/features/annotation/data/models/annotation_model.dart';
+
+class CreateProjectScreen extends StatefulWidget {
+  const CreateProjectScreen({super.key});
+
+  @override
+  State<CreateProjectScreen> createState() => _CreateProjectScreenState();
+}
+
+class _CreateProjectScreenState extends State<CreateProjectScreen> {
+  int _currentStep = 0;
+  final _formKey = GlobalKey<FormState>();
+
+  // Form fields
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  AnnotationType _selectedType = AnnotationType.text;
+  int _xpPerTask = 15;
+  final List<String> _tags = [];
+  final _tagController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _tagController.dispose();
+    super.dispose();
+  }
+
+  void _nextStep() {
+    if (_currentStep < 2) {
+      if (_validateCurrentStep()) {
+        setState(() => _currentStep++);
+      }
+    } else {
+      _createProject();
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    }
+  }
+
+  bool _validateCurrentStep() {
+    switch (_currentStep) {
+      case 0:
+        if (_nameController.text.trim().isEmpty) {
+          _showError('Please enter a project name');
+          return false;
+        }
+        if (_descriptionController.text.trim().isEmpty) {
+          _showError('Please enter a description');
+          return false;
+        }
+        return true;
+      case 1:
+        return true; // Type selection always valid
+      case 2:
+        return true; // Optional settings
+      default:
+        return true;
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  }
+
+  void _createProject() {
+    if (_formKey.currentState!.validate()) {
+      // TODO: Save project to backend
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Project created successfully!'),
+          backgroundColor: AppColors.secondaryGreen500,
+        ),
+      );
+      context.pop();
+    }
+  }
+
+  void _addTag() {
+    final tag = _tagController.text.trim();
+    if (tag.isNotEmpty && !_tags.contains(tag)) {
+      setState(() {
+        _tags.add(tag);
+        _tagController.clear();
+      });
+    }
+  }
+
+  void _removeTag(String tag) {
+    setState(() {
+      _tags.remove(tag);
+    });
+  }
+
+  Color _getTypeColor(AnnotationType type) {
+    switch (type) {
+      case AnnotationType.text:
+        return AppColors.primaryIndigo600;
+      case AnnotationType.image:
+        return AppColors.secondaryGreen500;
+      case AnnotationType.audio:
+        return AppColors.secondaryAmber500;
+    }
+  }
+
+  IconData _getTypeIcon(AnnotationType type) {
+    switch (type) {
+      case AnnotationType.text:
+        return Icons.text_fields;
+      case AnnotationType.image:
+        return Icons.image;
+      case AnnotationType.audio:
+        return Icons.audiotrack;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryIndigo600, AppColors.primaryIndigo500],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => context.pop(),
+                        icon: const Icon(
+                          Icons.close,
+                          color: AppColors.onPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Create New Project',
+                        style: AppFonts.headlineMedium.copyWith(
+                          color: AppColors.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Progress Indicator
+                  Row(
+                    children: List.generate(3, (index) {
+                      final isActive = index <= _currentStep;
+                      final isCompleted = index < _currentStep;
+                      return Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? AppColors.neutralWhite
+                                      : AppColors.neutralWhite.withValues(alpha:0.3),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ),
+                            if (index < 2) const SizedBox(width: 8),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _getStepTitle(_currentStep),
+                    style: AppFonts.bodyMedium.copyWith(
+                      color: AppColors.onPrimary.withValues(alpha:0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Form Content
+            Expanded(
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildStepContent(),
+                ),
+              ),
+            ),
+
+            // Navigation Buttons
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.neutralSlate900_25,
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  if (_currentStep > 0)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _previousStep,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(
+                            color: AppColors.neutralSlate600_30,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Back',
+                          style: AppFonts.buttonText.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (_currentStep > 0) const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: _nextStep,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryIndigo600,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        _currentStep < 2 ? 'Next' : 'Create Project',
+                        style: AppFonts.buttonText.copyWith(
+                          color: AppColors.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getStepTitle(int step) {
+    switch (step) {
+      case 0:
+        return 'Step 1: Basic Information';
+      case 1:
+        return 'Step 2: Project Type';
+      case 2:
+        return 'Step 3: Settings & Tags';
+      default:
+        return '';
+    }
+  }
+
+  Widget _buildStepContent() {
+    switch (_currentStep) {
+      case 0:
+        return _buildBasicInfoStep();
+      case 1:
+        return _buildTypeSelectionStep();
+      case 2:
+        return _buildSettingsStep();
+      default:
+        return const SizedBox();
+    }
+  }
+
+  Widget _buildBasicInfoStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Project Name',
+          style: AppFonts.titleMedium.copyWith(
+            color: AppColors.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _nameController,
+          decoration: InputDecoration(
+            hintText: 'e.g., Medical Image Classification',
+            filled: true,
+            fillColor: AppColors.background,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.neutralSlate600_30,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.neutralSlate600_30,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.primaryIndigo600,
+                width: 2,
+              ),
+            ),
+          ),
+          style: AppFonts.bodyMedium.copyWith(
+            color: AppColors.onBackground,
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        Text(
+          'Description',
+          style: AppFonts.titleMedium.copyWith(
+            color: AppColors.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _descriptionController,
+          maxLines: 5,
+          decoration: InputDecoration(
+            hintText: 'Describe what needs to be annotated and any special instructions...',
+            filled: true,
+            fillColor: AppColors.background,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.neutralSlate600_30,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.neutralSlate600_30,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.primaryIndigo600,
+                width: 2,
+              ),
+            ),
+          ),
+          style: AppFonts.bodyMedium.copyWith(
+            color: AppColors.onBackground,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTypeSelectionStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Select Annotation Type',
+          style: AppFonts.titleMedium.copyWith(
+            color: AppColors.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Choose the type of data you want to annotate',
+          style: AppFonts.bodyMedium.copyWith(
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        ...AnnotationType.values.map((type) {
+          return _buildTypeCard(type);
+        }),
+      ],
+    );
+  }
+
+  Widget _buildTypeCard(AnnotationType type) {
+    final isSelected = _selectedType == type;
+    final color = _getTypeColor(type);
+    final icon = _getTypeIcon(type);
+
+    String title, description;
+    switch (type) {
+      case AnnotationType.text:
+        title = 'Text Annotation';
+        description = 'Label text segments, sentiment, entities, or categories';
+        break;
+      case AnnotationType.image:
+        title = 'Image Annotation';
+        description = 'Draw bounding boxes, label objects, or classify images';
+        break;
+      case AnnotationType.audio:
+        title = 'Audio Annotation';
+        description = 'Transcribe speech, classify sounds, or label audio segments';
+        break;
+    }
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedType = type),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha:0.1) : AppColors.background,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color : AppColors.neutralSlate600_30,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha:0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppFonts.titleMedium.copyWith(
+                      color: AppColors.onBackground,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: AppFonts.bodySmall.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: color,
+                size: 28,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'XP Reward Per Task',
+          style: AppFonts.titleMedium.copyWith(
+            color: AppColors.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.neutralSlate600_30,
+            ),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'XP per completed task',
+                    style: AppFonts.bodyMedium.copyWith(
+                      color: AppColors.onBackground,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondaryAmber500.withValues(alpha:0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star,
+                          color: AppColors.secondaryAmber500,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$_xpPerTask XP',
+                          style: AppFonts.titleMedium.copyWith(
+                            color: AppColors.secondaryAmber500,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Slider(
+                value: _xpPerTask.toDouble(),
+                min: 5,
+                max: 50,
+                divisions: 9,
+                activeColor: AppColors.secondaryAmber500,
+                inactiveColor: AppColors.neutralSlate600_30,
+                onChanged: (value) {
+                  setState(() => _xpPerTask = value.toInt());
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        Text(
+          'Tags (Optional)',
+          style: AppFonts.titleMedium.copyWith(
+            color: AppColors.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Add tags to help others find your project',
+          style: AppFonts.bodySmall.copyWith(
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _tagController,
+                decoration: InputDecoration(
+                  hintText: 'e.g., medical, nlp, computer-vision',
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.neutralSlate600_30,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.neutralSlate600_30,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.primaryIndigo600,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                style: AppFonts.bodyMedium.copyWith(
+                  color: AppColors.onBackground,
+                ),
+                onSubmitted: (_) => _addTag(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton(
+              onPressed: _addTag,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryIndigo600,
+                padding: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Icon(
+                Icons.add,
+                color: AppColors.onPrimary,
+              ),
+            ),
+          ],
+        ),
+        if (_tags.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _tags.map((tag) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryIndigo600.withValues(alpha:0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.primaryIndigo600.withValues(alpha:0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '#$tag',
+                      style: AppFonts.bodySmall.copyWith(
+                        color: AppColors.primaryIndigo600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () => _removeTag(tag),
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: AppColors.primaryIndigo600,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ],
+    );
+  }
+}

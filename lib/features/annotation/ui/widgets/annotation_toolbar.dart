@@ -1,1 +1,0 @@
-// Annotation toolbar widget

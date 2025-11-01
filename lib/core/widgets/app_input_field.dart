@@ -121,7 +121,7 @@ class _AppInputFieldState extends State<AppInputField> {
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(24),
             borderSide: BorderSide(
-              color: AppColors.neutralSlate600_30.withOpacity(0.5),
+              color: AppColors.neutralSlate600_30.withValues(alpha:0.5),
               width: 1,
             ),
           ),

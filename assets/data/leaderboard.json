@@ -1,0 +1,104 @@
+{
+  "leaderboard": [
+    {
+      "userId": "user_001",
+      "username": "AnnotationMaster",
+      "avatarUrl": null,
+      "totalXp": 15420,
+      "level": 12,
+      "rank": 1,
+      "annotationsCompleted": 1542,
+      "streak": 45
+    },
+    {
+      "userId": "user_002",
+      "username": "DataWizard",
+      "avatarUrl": null,
+      "totalXp": 12350,
+      "level": 10,
+      "rank": 2,
+      "annotationsCompleted": 1235,
+      "streak": 32
+    },
+    {
+      "userId": "user_003",
+      "username": "LabelPro",
+      "avatarUrl": null,
+      "totalXp": 10890,
+      "level": 9,
+      "rank": 3,
+      "annotationsCompleted": 1089,
+      "streak": 28
+    },
+    {
+      "userId": "user_004",
+      "username": "AITrainer",
+      "avatarUrl": null,
+      "totalXp": 9750,
+      "level": 8,
+      "rank": 4,
+      "annotationsCompleted": 975,
+      "streak": 21
+    },
+    {
+      "userId": "user_005",
+      "username": "TagExpert",
+      "avatarUrl": null,
+      "totalXp": 8750,
+      "level": 7,
+      "rank": 5,
+      "annotationsCompleted": 875,
+      "streak": 19
+    },
+    {
+      "userId": "user_006",
+      "username": "Bon",
+      "avatarUrl": null,
+      "totalXp": 8750,
+      "level": 7,
+      "rank": 6,
+      "annotationsCompleted": 875,
+      "streak": 15
+    },
+    {
+      "userId": "user_007",
+      "username": "DataNinja",
+      "avatarUrl": null,
+      "totalXp": 7200,
+      "level": 6,
+      "rank": 7,
+      "annotationsCompleted": 720,
+      "streak": 14
+    },
+    {
+      "userId": "user_008",
+      "username": "AnnotateKing",
+      "avatarUrl": null,
+      "totalXp": 6500,
+      "level": 5,
+      "rank": 8,
+      "annotationsCompleted": 650,
+      "streak": 12
+    },
+    {
+      "userId": "user_009",
+      "username": "LabelQueen",
+      "avatarUrl": null,
+      "totalXp": 5800,
+      "level": 5,
+      "rank": 9,
+      "annotationsCompleted": 580,
+      "streak": 10
+    },
+    {
+      "userId": "user_010",
+      "username": "MLHelper",
+      "avatarUrl": null,
+      "totalXp": 5200,
+      "level": 4,
+      "rank": 10,
+      "annotationsCompleted": 520,
+      "streak": 8
+    }
+  ]
+}

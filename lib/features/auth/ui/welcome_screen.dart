@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/features/auth/ui/widgets/logo_header.dart';
 import 'package:lexi_quest/features/auth/ui/widgets/positioned_liney.dart';
 import '../../../core/theme/app_colors.dart';
