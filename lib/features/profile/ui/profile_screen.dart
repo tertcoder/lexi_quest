@@ -1,25 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/utils/app_assets.dart';
 import 'package:lexi_quest/routes.dart';
+import 'package:lexi_quest/features/auth/bloc/auth_bloc.dart';
+import 'package:lexi_quest/features/auth/bloc/auth_event.dart';
+import 'package:lexi_quest/features/profile/bloc/profile_bloc.dart';
+import 'package:lexi_quest/features/profile/bloc/profile_event.dart';
+import 'package:lexi_quest/features/profile/bloc/profile_state.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  /// Get badge asset based on level
+  String _getBadgeForLevel(int level) {
+    if (level >= 50) return AppAssets.badgeDiamond;
+    if (level >= 25) return AppAssets.badgeGold;
+    if (level >= 10) return AppAssets.badgeSilver;
+    return AppAssets.badgeBronze;
+  }
+
+  /// Get badge name based on level
+  String _getBadgeNameForLevel(int level) {
+    if (level >= 50) return 'Diamond';
+    if (level >= 25) return 'Gold';
+    if (level >= 10) return 'Silver';
+    return 'Bronze';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Mock user data
-    const String username = 'Bon';
-    const int totalXp = 8750;
-    const int level = 7;
-    const int currentLevelXp = 750;
-    const int nextLevelXp = 1000;
-    const int streak = 15;
-    const int annotationsCompleted = 875;
-    final double levelProgress = currentLevelXp / nextLevelXp;
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => ProfileBloc()..add(const LoadProfile())),
+        BlocProvider(create: (context) => AuthBloc()),
+      ],
+      child: BlocBuilder<ProfileBloc, ProfileState>(
+        builder: (context, state) {
+          if (state is ProfileLoading) {
+            return const Scaffold(
+              backgroundColor: AppColors.surface,
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (state is ProfileError) {
+            return Scaffold(
+              backgroundColor: AppColors.surface,
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: AppColors.secondaryRed500),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading profile',
+                      style: AppFonts.titleLarge.copyWith(color: AppColors.onBackground),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      state.message,
+                      style: AppFonts.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => context.read<ProfileBloc>().add(const LoadProfile()),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // Default mock data for initial state
+          String username = 'User';
+          int totalXp = 0;
+          int level = 1;
+          int currentLevelXp = 0;
+          int nextLevelXp = 100;
+          int streak = 0;
+          int annotationsCompleted = 0;
+
+          if (state is ProfileLoaded) {
+            username = state.profile.username;
+            totalXp = state.profile.totalXp;
+            level = state.profile.level;
+            currentLevelXp = state.profile.currentLevelXp;
+            nextLevelXp = state.profile.nextLevelXp;
+            streak = state.profile.streak;
+            annotationsCompleted = state.profile.annotationsCompleted;
+          }
+
+          final double levelProgress = nextLevelXp > 0 ? currentLevelXp / nextLevelXp : 0;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -167,13 +244,13 @@ class ProfileScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           SvgPicture.asset(
-                            AppAssets.badgeGold,
+                            _getBadgeForLevel(level),
                             width: 20,
                             height: 20,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Level $level',
+                            '${_getBadgeNameForLevel(level)} • Level $level',
                             style: AppFonts.titleSmall.copyWith(
                               color: AppColors.neutralWhite,
                               fontWeight: FontWeight.bold,
@@ -195,18 +272,16 @@ class ProfileScreen extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildStatCard(
-                            icon: Icons.star,
-                            iconColor: AppColors.secondaryAmber500,
+                          child: _buildStatCardWithSvg(
+                            svgPath: AppAssets.illXp,
                             value: totalXp.toString(),
                             label: 'Total XP',
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _buildStatCard(
-                            icon: Icons.local_fire_department,
-                            iconColor: AppColors.secondaryRed500,
+                          child: _buildStatCardWithSvg(
+                            svgPath: AppAssets.illStreak,
                             value: streak.toString(),
                             label: 'Day Streak',
                           ),
@@ -425,7 +500,7 @@ class ProfileScreen extends StatelessWidget {
                       icon: Icons.person_outline,
                       title: 'Edit Profile',
                       onTap: () {
-                        // TODO: Navigate to edit profile
+                        context.push(AppRoutes.editProfile);
                       },
                     ),
                     _buildSettingsTile(
@@ -488,9 +563,13 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
-            ],
+            const SizedBox(height: 100),
+          ],
           ),
         ),
+      ),
+    );
+        },
       ),
     );
   }
@@ -516,6 +595,47 @@ class ProfileScreen extends StatelessWidget {
             icon,
             color: iconColor,
             size: 32,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: AppFonts.titleLarge.copyWith(
+              color: AppColors.onBackground,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: AppFonts.bodySmall.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCardWithSvg({
+    required String svgPath,
+    required String value,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.neutralSlate600_30,
+        ),
+      ),
+      child: Column(
+        children: [
+          SvgPicture.asset(
+            svgPath,
+            width: 32,
+            height: 32,
           ),
           const SizedBox(height: 8),
           Text(
@@ -637,9 +757,26 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              // TODO: Implement logout
+              
+              // Show loading
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+              
+              // Use AuthBloc for logout
+              context.read<AuthBloc>().add(const SignOutRequested());
+              
+              // Close dialogs
+              if (context.mounted) Navigator.of(context).pop();
+              
+              // Navigate to welcome
+              if (context.mounted) context.go(AppRoutes.welcome);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondaryRed500,

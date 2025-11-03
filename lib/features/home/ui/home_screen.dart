@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/utils/app_assets.dart';
 import 'package:lexi_quest/core/widgets/stat_card.dart';
 import 'package:lexi_quest/routes.dart';
+import 'package:lexi_quest/features/profile/bloc/profile_bloc.dart';
+import 'package:lexi_quest/features/profile/bloc/profile_event.dart';
+import 'package:lexi_quest/features/profile/bloc/profile_state.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load profile once when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileBloc>().add(const LoadProfile());
+    });
+  }
 
   /// Returns greeting based on current time
   String _getTimeBasedGreeting() {
@@ -25,432 +43,468 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
+  /// Get badge asset based on level
+  String _getBadgeForLevel(int level) {
+    if (level >= 50) return AppAssets.badgeDiamond;
+    if (level >= 25) return AppAssets.badgeGold;
+    if (level >= 10) return AppAssets.badgeSilver;
+    return AppAssets.badgeBronze;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
-              // Header Row with Profile and Notification
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Profile Section
-                  Row(
-                    children: [
-                      // Profile Image with border
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.secondaryAmber500,
-                            width: 2,
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 28,
-                          backgroundImage: AssetImage(AppAssets.defaultProfile),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Greeting Column
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "${_getTimeBasedGreeting()} Bon",
-                            style: AppFonts.titleMedium.copyWith(
-                              color: AppColors.onBackground,
-                              fontSize: 18,
-                            ),
-                          ),
-                          Text(
-                            "Time to annotate!",
-                            style: AppFonts.bodyMedium.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  // Notification Bell
-                  GestureDetector(
-                    onTap: () {
-                      debugPrint("Notification bell tapped");
-                      // TODO: Handle notification tap
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      child: SvgPicture.asset(
-                        AppAssets.icBell,
-                        width: 24,
-                        height: 24,
-                        colorFilter: ColorFilter.mode(
-                          AppColors.onBackground,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+    return BlocBuilder<ProfileBloc, ProfileState>(
+      builder: (context, state) {
+        // Default values
+        String username = 'User';
+        int totalXp = 0;
+        int streak = 0;
+        int level = 1;
+        double levelProgress = 0.0;
 
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.neutralSlate900_25),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: StatCard(
-                            iconPath: AppAssets.illStreak,
-                            number: "1,250",
-                            label: "Streaks Day",
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: StatCard(
-                            iconPath: AppAssets.illXp,
-                            number: "8,750",
-                            label: "Total XP",
-                            numberColor: AppColors.secondaryGreen500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        border: Border.all(color: AppColors.neutralSlate900_25),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            AppAssets.badgeBronze,
-                            width: 40,
-                            height: 40,
-                          ),
-                          const SizedBox(width: 4),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "01",
-                                style: AppFonts.headlineMedium.copyWith(
-                                  color: AppColors.secondaryAmber500,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Level",
-                                style: AppFonts.bodyMedium.copyWith(
-                                  color: AppColors.neutralSlate600_70,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Container(
-                              height: 48,
-                              padding: const EdgeInsets.all(2),
+        if (state is ProfileLoaded) {
+          username = state.profile.username;
+          totalXp = state.profile.totalXp;
+          streak = state.profile.streak;
+          level = state.profile.level;
+          levelProgress = state.profile.levelProgress;
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.surface,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  // Header Row with Profile and Notification
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Profile Section
+                      Expanded(
+                        child: Row(
+                          children: [
+                            // Profile Image with border
+                            Container(
                               decoration: BoxDecoration(
-                                color: AppColors.onSurfaceVariant,
-                                borderRadius: BorderRadius.circular(8),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.secondaryAmber500,
+                                  width: 2,
+                                ),
                               ),
-                              child: Stack(
+                              child: CircleAvatar(
+                                radius: 28,
+                                backgroundImage: AssetImage(
+                                  AppAssets.defaultProfile,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Greeting Column
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 110,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.secondaryGreen500,
-                                      borderRadius: BorderRadius.circular(6),
+                                  Text(
+                                    "${_getTimeBasedGreeting()} $username",
+                                    style: AppFonts.titleMedium.copyWith(
+                                      color: AppColors.onBackground,
+                                      fontSize: 18,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  Center(
-                                    child: Text(
-                                      "50%",
-                                      style: AppFonts.titleMedium.copyWith(
-                                        color: AppColors.onPrimary,
-                                        fontWeight: FontWeight.w700,
-                                        height: 1,
-                                      ),
+                                  Text(
+                                    "Time to annotate!",
+                                    style: AppFonts.bodyMedium.copyWith(
+                                      color: AppColors.onSurfaceVariant,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                      // Notification Bell
+                      GestureDetector(
+                        onTap: () {
+                          debugPrint("Notification bell tapped");
+                          // TODO: Handle notification tap
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: SvgPicture.asset(
+                            AppAssets.icBell,
+                            width: 24,
+                            height: 24,
+                            colorFilter: ColorFilter.mode(
+                              AppColors.onBackground,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.neutralSlate900_25),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                iconPath: AppAssets.illStreak,
+                                number: streak.toString(),
+                                label: "Streaks Day",
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: StatCard(
+                                iconPath: AppAssets.illXp,
+                                number: totalXp.toString(),
+                                label: "Total XP",
+                                numberColor: AppColors.secondaryGreen500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            border: Border.all(
+                              color: AppColors.neutralSlate900_25,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset(
+                                _getBadgeForLevel(level),
+                                width: 40,
+                                height: 40,
+                              ),
+                              const SizedBox(width: 4),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    level.toString().padLeft(2, '0'),
+                                    style: AppFonts.headlineMedium.copyWith(
+                                      color: AppColors.secondaryAmber500,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Level",
+                                    style: AppFonts.bodyMedium.copyWith(
+                                      color: AppColors.neutralSlate600_70,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Container(
+                                  height: 48,
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.onSurfaceVariant,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          return Container(
+                                            width:
+                                                constraints.maxWidth *
+                                                levelProgress,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  AppColors.secondaryGreen500,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      Center(
+                                        child: Text(
+                                          "${(levelProgress * 100).toInt()}%",
+                                          style: AppFonts.titleMedium.copyWith(
+                                            color: AppColors.onPrimary,
+                                            fontWeight: FontWeight.w700,
+                                            height: 1,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Quick Actions Title
+                  Text(
+                    "Quick Actions",
+                    style: AppFonts.titleMedium.copyWith(
+                      color: AppColors.onBackground,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Annotation Options Grid
+                  Row(
+                    children: [
+                      // First Column
+                      Expanded(
+                        child: Column(
+                          children: [
+                            // Audio Annotation
+                            GestureDetector(
+                              onTap: () {
+                                context.push(AppRoutes.audioAnnotation);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  border: Border.all(
+                                    color: AppColors.neutralSlate600_30,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(AppAssets.icAudio),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        "Audio Annotation",
+                                        style: AppFonts.bodyMedium.copyWith(
+                                          color: AppColors.onSurfaceVariant,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            // Text Annotation
+                            GestureDetector(
+                              onTap: () {
+                                context.push(AppRoutes.textAnnotation);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  border: Border.all(
+                                    color: AppColors.neutralSlate600_30,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(AppAssets.icText),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        "Text Annotation",
+                                        style: AppFonts.bodyMedium.copyWith(
+                                          color: AppColors.onSurfaceVariant,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Second Column
+                      Expanded(
+                        child: Column(
+                          children: [
+                            // Image Annotation
+                            GestureDetector(
+                              onTap: () {
+                                context.push(AppRoutes.imageAnnotation);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  border: Border.all(
+                                    color: AppColors.neutralSlate600_30,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(AppAssets.icImage),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        "Image Annotation",
+                                        style: AppFonts.bodyMedium.copyWith(
+                                          color: AppColors.onSurfaceVariant,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            // Leaderboard
+                            GestureDetector(
+                              onTap: () {
+                                context.push(AppRoutes.leaderboard);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  border: Border.all(
+                                    color: AppColors.neutralSlate600_30,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(AppAssets.icLeaderboard),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        "Leaderboard",
+                                        style: AppFonts.bodyMedium.copyWith(
+                                          color: AppColors.onSurfaceVariant,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Recent Activities Section
+                  Text(
+                    "Recent Activities",
+                    style: AppFonts.titleMedium.copyWith(
+                      color: AppColors.onBackground,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Activities List
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.neutralSlate600_30),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.history,
+                            size: 48,
+                            color: AppColors.onSurfaceVariant.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No recent activities',
+                            style: AppFonts.bodyMedium.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Start annotating to see your activities here!',
+                            style: AppFonts.bodySmall.copyWith(
+                              color: AppColors.onSurfaceVariant.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Quick Actions Title
-              Text(
-                "Quick Actions",
-                style: AppFonts.titleMedium.copyWith(
-                  color: AppColors.onBackground,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Annotation Options Grid
-              Row(
-                children: [
-                  // First Column
-                  Expanded(
-                    child: Column(
-                      children: [
-                        // Audio Annotation
-                        GestureDetector(
-                          onTap: () {
-                            context.push(AppRoutes.audioAnnotation);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              border: Border.all(
-                                color: AppColors.neutralSlate600_30,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              children: [
-                                SvgPicture.asset(AppAssets.icAudio),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    "Audio Annotation",
-                                    style: AppFonts.bodyMedium.copyWith(
-                                      color: AppColors.onSurfaceVariant,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        // Text Annotation
-                        GestureDetector(
-                          onTap: () {
-                            context.push(AppRoutes.textAnnotation);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              border: Border.all(
-                                color: AppColors.neutralSlate600_30,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              children: [
-                                SvgPicture.asset(AppAssets.icText),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    "Text Annotation",
-                                    style: AppFonts.bodyMedium.copyWith(
-                                      color: AppColors.onSurfaceVariant,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                  const SizedBox(width: 12),
-                  // Second Column
-                  Expanded(
-                    child: Column(
-                      children: [
-                        // Image Annotation
-                        GestureDetector(
-                          onTap: () {
-                            context.push(AppRoutes.imageAnnotation);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              border: Border.all(
-                                color: AppColors.neutralSlate600_30,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              children: [
-                                SvgPicture.asset(AppAssets.icImage),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    "Image Annotation",
-                                    style: AppFonts.bodyMedium.copyWith(
-                                      color: AppColors.onSurfaceVariant,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        // Leaderboard
-                        GestureDetector(
-                          onTap: () {
-                            context.push(AppRoutes.leaderboard);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              border: Border.all(
-                                color: AppColors.neutralSlate600_30,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              children: [
-                                SvgPicture.asset(AppAssets.icLeaderboard),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    "Leaderboard",
-                                    style: AppFonts.bodyMedium.copyWith(
-                                      color: AppColors.onSurfaceVariant,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+
+                  const SizedBox(height: 100),
                 ],
               ),
-
-              const SizedBox(height: 24),
-
-              // Recent Activities Section
-              Text(
-                "Recent Activities",
-                style: AppFonts.titleMedium.copyWith(
-                  color: AppColors.onBackground,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Activities List
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.neutralSlate600_30,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _buildActivityItem(
-                      icon: Icons.check_circle,
-                      iconColor: AppColors.secondaryGreen500,
-                      title: 'Completed Text Annotation',
-                      subtitle: 'Sentiment Analysis Dataset',
-                      time: '2 hours ago',
-                      xp: '+15 XP',
-                    ),
-                    const Divider(height: 1, color: AppColors.neutralSlate600_30),
-                    _buildActivityItem(
-                      icon: Icons.image,
-                      iconColor: AppColors.secondaryAmber500,
-                      title: 'Annotated 5 images',
-                      subtitle: 'Street Scene Detection',
-                      time: '5 hours ago',
-                      xp: '+125 XP',
-                    ),
-                    const Divider(height: 1, color: AppColors.neutralSlate600_30),
-                    _buildActivityItem(
-                      icon: Icons.verified,
-                      iconColor: AppColors.primaryIndigo600,
-                      title: 'Validation Approved',
-                      subtitle: 'Medical Image Classification',
-                      time: 'Yesterday',
-                      xp: '+30 XP',
-                    ),
-                    const Divider(height: 1, color: AppColors.neutralSlate600_30),
-                    _buildActivityItem(
-                      icon: Icons.emoji_events,
-                      iconColor: AppColors.secondaryAmber500,
-                      title: 'Reached Level 7!',
-                      subtitle: 'Keep up the great work',
-                      time: '2 days ago',
-                      xp: null,
-                    ),
-                  ],
-                ),
-              ),
-              
-
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -471,14 +525,10 @@ class HomeScreen extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha:0.1),
+              color: iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 20,
-            ),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
           const SizedBox(width: 12),
 
@@ -523,7 +573,7 @@ class HomeScreen extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.secondaryAmber500.withValues(alpha:0.1),
+                    color: AppColors.secondaryAmber500.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(

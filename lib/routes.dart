@@ -1,34 +1,67 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lexi_quest/features/auth/ui/login_screen.dart';
 import 'package:lexi_quest/features/auth/ui/signup_screen.dart';
+import 'package:lexi_quest/features/auth/ui/forgot_password_screen.dart';
+import 'package:lexi_quest/features/auth/ui/change_password_screen.dart';
 import 'package:lexi_quest/features/home/ui/home_screen.dart';
 import 'package:lexi_quest/features/annotation/ui/text_annotation_screen.dart';
 import 'package:lexi_quest/features/annotation/ui/image_annotation_screen.dart';
 import 'package:lexi_quest/features/annotation/ui/audio_annotation_screen.dart';
 import 'package:lexi_quest/features/leaderboard/ui/leaderboard_screen.dart';
 import 'package:lexi_quest/features/profile/ui/profile_screen.dart';
+import 'package:lexi_quest/features/profile/ui/edit_profile_screen.dart';
 import 'package:lexi_quest/features/settings/ui/settings_screen.dart';
 import 'package:lexi_quest/features/projects/ui/projects_screen.dart';
 import 'package:lexi_quest/features/projects/ui/project_details_screen.dart';
 import 'package:lexi_quest/features/projects/ui/create_project_screen.dart';
+import 'package:lexi_quest/features/projects/ui/edit_project_screen.dart';
+import 'package:lexi_quest/features/projects/bloc/projects_bloc.dart';
 import 'package:lexi_quest/core/widgets/main_navigation.dart';
+import 'package:lexi_quest/core/config/supabase_config.dart';
+import 'package:lexi_quest/features/splash/splash_screen.dart';
 import 'features/auth/ui/welcome_screen.dart';
 import 'core/widgets/theme_preview_screen.dart';
+
+/// Stream wrapper for GoRouter to listen to auth state changes
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<AuthState> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+          (AuthState _) => notifyListeners(),
+        );
+  }
+
+  late final StreamSubscription<AuthState> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
 
 /// App-wide route definitions using GoRouter
 class AppRoutes {
   // Route paths
+  static const String splash = '/';
   static const String welcome = '/welcome';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
+  static const String changePassword = '/change-password';
   static const String home = '/home';
   static const String mainNav = '/main';
   static const String profile = '/profile';
+  static const String editProfile = '/profile/edit';
   static const String leaderboard = '/leaderboard';
   static const String projects = '/projects';
   static const String projectDetails = '/projects/details';
   static const String createProject = '/projects/create';
+  static const String editProject = '/projects/edit';
   static const String annotation = '/annotation';
   static const String textAnnotation = '/annotation/text';
   static const String imageAnnotation = '/annotation/image';
@@ -39,9 +72,40 @@ class AppRoutes {
 
   /// GoRouter configuration
   static final GoRouter router = GoRouter(
-    initialLocation: mainNav, // Start with main navigation after development
+    initialLocation: splash, // Start with splash screen
     debugLogDiagnostics: true,
+    refreshListenable: GoRouterRefreshStream(SupabaseConfig.client.auth.onAuthStateChange),
+    redirect: (context, state) {
+      // Allow splash screen to always load
+      if (state.matchedLocation == splash) {
+        return null;
+      }
+
+      final isAuthenticated = SupabaseConfig.client.auth.currentUser != null;
+      final isGoingToAuth = state.matchedLocation == welcome ||
+          state.matchedLocation == login ||
+          state.matchedLocation == register ||
+          state.matchedLocation == forgotPassword ||
+          state.matchedLocation == themePreview; // Allow theme preview
+
+      // If not authenticated and trying to access protected route, redirect to welcome
+      if (!isAuthenticated && !isGoingToAuth) {
+        return welcome;
+      }
+
+      // If authenticated and trying to access auth screens, redirect to main
+      if (isAuthenticated && (state.matchedLocation == welcome || state.matchedLocation == login || state.matchedLocation == register)) {
+        return mainNav;
+      }
+
+      return null; // No redirect needed
+    },
     routes: [
+      GoRoute(
+        path: splash,
+        name: 'splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: welcome,
         name: 'welcome',
@@ -63,6 +127,16 @@ class AppRoutes {
         builder: (context, state) => const SignUpScreen(),
       ),
       GoRoute(
+        path: forgotPassword,
+        name: 'forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: changePassword,
+        name: 'change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
         path: home,
         name: 'home',
         builder: (context, state) => const HomeScreen(),
@@ -76,6 +150,11 @@ class AppRoutes {
         path: profile,
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: editProfile,
+        name: 'edit-profile',
+        builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
         path: leaderboard,
@@ -98,7 +177,18 @@ class AppRoutes {
       GoRoute(
         path: createProject,
         name: 'create-project',
-        builder: (context, state) => const CreateProjectScreen(),
+        builder: (context, state) => BlocProvider(
+          create: (context) => ProjectsBloc(),
+          child: const CreateProjectScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '$editProject/:id',
+        name: 'edit-project',
+        builder: (context, state) {
+          final projectId = state.pathParameters['id']!;
+          return EditProjectScreen(projectId: projectId);
+        },
       ),
       GoRoute(
         path: annotation,
@@ -131,17 +221,26 @@ class AppRoutes {
       GoRoute(
         path: textAnnotation,
         name: 'text-annotation',
-        builder: (context, state) => const TextAnnotationScreen(),
+        builder: (context, state) {
+          final projectId = state.uri.queryParameters['projectId'];
+          return TextAnnotationScreen(projectId: projectId);
+        },
       ),
       GoRoute(
         path: imageAnnotation,
         name: 'image-annotation',
-        builder: (context, state) => const ImageAnnotationScreen(),
+        builder: (context, state) {
+          final projectId = state.uri.queryParameters['projectId'];
+          return ImageAnnotationScreen(projectId: projectId);
+        },
       ),
       GoRoute(
         path: audioAnnotation,
         name: 'audio-annotation',
-        builder: (context, state) => const AudioAnnotationScreen(),
+        builder: (context, state) {
+          final projectId = state.uri.queryParameters['projectId'];
+          return AudioAnnotationScreen(projectId: projectId);
+        },
       ),
       GoRoute(
         path: statistics,

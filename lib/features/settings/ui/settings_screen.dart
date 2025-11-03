@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
+import 'package:lexi_quest/routes.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -168,7 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: 'Change Password',
                       subtitle: 'Update your password',
                       onTap: () {
-                        // TODO: Navigate to change password
+                        context.push(AppRoutes.changePassword);
                       },
                     ),
                     _buildSettingsTile(

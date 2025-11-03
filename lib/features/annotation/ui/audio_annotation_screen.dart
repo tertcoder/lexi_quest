@@ -1,591 +1,686 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
-import 'package:lexi_quest/core/widgets/annotation_app_bar.dart';
 import 'package:lexi_quest/core/widgets/xp_reward_dialog.dart';
 import 'package:lexi_quest/features/annotation/data/models/annotation_model.dart';
+import 'package:lexi_quest/features/annotation/bloc/annotation_bloc.dart';
+import 'package:lexi_quest/features/annotation/bloc/annotation_event.dart';
+import 'package:lexi_quest/features/annotation/bloc/annotation_state.dart';
 
 class AudioAnnotationScreen extends StatefulWidget {
-  const AudioAnnotationScreen({super.key});
+  final String? projectId;
+  
+  const AudioAnnotationScreen({
+    super.key,
+    this.projectId,
+  });
 
   @override
   State<AudioAnnotationScreen> createState() => _AudioAnnotationScreenState();
 }
 
-class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> {
-  List<AnnotationModel> _annotations = [];
+class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-  final TextEditingController _transcriptionController = TextEditingController();
-  final List<String> _selectedLabels = [];
-  int _totalXp = 8750;
-  int _currentStreak = 15;
-
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  String? _selectedLabel;
   bool _isPlaying = false;
-  Duration _duration = Duration.zero;
-  Duration _position = Duration.zero;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _loadAnnotations();
-    _setupAudioPlayer();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
+    _animationController.forward();
   }
 
-  void _setupAudioPlayer() {
-    _audioPlayer.onDurationChanged.listen((duration) {
-      setState(() {
-        _duration = duration;
-      });
-    });
-
-    _audioPlayer.onPositionChanged.listen((position) {
-      setState(() {
-        _position = position;
-      });
-    });
-
-    _audioPlayer.onPlayerStateChanged.listen((state) {
-      setState(() {
-        _isPlaying = state == PlayerState.playing;
-      });
-    });
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
-  Future<void> _loadAnnotations() async {
-    try {
-      final String response = await rootBundle.loadString('assets/data/sample_annotations.json');
-      final data = json.decode(response);
-      final List<dynamic> audioAnnotations = data['audio_annotations'];
-
-      setState(() {
-        _annotations = audioAnnotations
-            .map((json) => AnnotationModel.fromJson(json))
-            .toList();
-      });
-
-      // Load first audio
-      if (_annotations.isNotEmpty) {
-        _loadAudio(_annotations[0].audioUrl);
-      }
-    } catch (e) {
-      debugPrint('Error loading annotations: $e');
-    }
-  }
-
-  Future<void> _loadAudio(String? url) async {
-    if (url == null || url.isEmpty) return;
-
-    try {
-      await _audioPlayer.setSourceUrl(url);
-    } catch (e) {
-      debugPrint('Error loading audio: $e');
-    }
-  }
-
-  AnnotationModel? get _currentAnnotation {
-    if (_annotations.isEmpty || _currentIndex >= _annotations.length) {
-      return null;
-    }
-    return _annotations[_currentIndex];
-  }
-
-  Future<void> _togglePlayPause() async {
-    if (_isPlaying) {
-      await _audioPlayer.pause();
-    } else {
-      await _audioPlayer.resume();
-    }
-  }
-
-  Future<void> _seekTo(Duration position) async {
-    await _audioPlayer.seek(position);
-  }
-
-  void _toggleLabel(String label) {
-    setState(() {
-      if (_selectedLabels.contains(label)) {
-        _selectedLabels.remove(label);
-      } else {
-        _selectedLabels.add(label);
-      }
-    });
-  }
-
-  Future<void> _submitAnnotation() async {
-    final transcription = _transcriptionController.text.trim();
-
-    if (transcription.isEmpty && _selectedLabels.isEmpty) {
+  void _submitAnnotation(BuildContext context, AnnotationModel annotation) {
+    if (_selectedLabel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please provide a transcription or select labels'),
+        SnackBar(
+          content: const Text('Please select a label before submitting'),
           backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
       return;
     }
 
-    final xpEarned = _currentAnnotation?.xpReward ?? 10;
-    setState(() {
-      _totalXp += xpEarned;
-      _currentStreak++;
-    });
+    final annotationData = {
+      'selected_label': _selectedLabel,
+      'audio_url': annotation.audioUrl,
+      'annotation_id': annotation.id,
+    };
 
-    await XpRewardDialog.show(
-      context,
-      xpEarned: xpEarned,
-      currentStreak: _currentStreak,
+    context.read<AnnotationBloc>().add(
+      SubmitAnnotation(
+        annotationId: annotation.id,
+        data: annotationData,
+        xpEarned: annotation.xpReward,
+      ),
     );
-
-    _nextAnnotation();
   }
 
-  Future<void> _nextAnnotation() async {
-    await _audioPlayer.stop();
-
-    setState(() {
-      if (_currentIndex < _annotations.length - 1) {
-        _currentIndex++;
-        _transcriptionController.clear();
-        _selectedLabels.clear();
-        _position = Duration.zero;
-        _duration = Duration.zero;
-      } else {
-        Navigator.of(context).pop();
-        return;
-      }
-    });
-
-    // Load next audio
-    final nextAnnotation = _currentAnnotation;
-    if (nextAnnotation != null) {
-      await _loadAudio(nextAnnotation.audioUrl);
+  void _nextAnnotation(int totalAnnotations) {
+    if (_currentIndex < totalAnnotations - 1) {
+      _animationController.reverse().then((_) {
+        setState(() {
+          _currentIndex++;
+          _selectedLabel = null;
+          _isPlaying = false;
+        });
+        _animationController.forward();
+      });
+    } else {
+      context.pop();
     }
   }
 
-  void _skipAnnotation() {
-    _nextAnnotation();
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    _transcriptionController.dispose();
-    super.dispose();
+  void _togglePlayPause() {
+    setState(() {
+      _isPlaying = !_isPlaying;
+    });
+    // TODO: Implement actual audio playback
   }
 
   @override
   Widget build(BuildContext context) {
-    final annotation = _currentAnnotation;
-
-    if (annotation == null) {
-      return Scaffold(
-        appBar: AnnotationAppBar(
-          title: 'Audio Annotation',
-          currentXp: _totalXp,
+    return BlocProvider(
+      create: (context) => AnnotationBloc()
+        ..add(
+          widget.projectId != null
+              ? LoadAnnotationsFromProjectTasks(
+                  projectId: widget.projectId!,
+                  type: AnnotationType.audio,
+                )
+              : const LoadAnnotations(type: AnnotationType.audio),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+      child: BlocConsumer<AnnotationBloc, AnnotationState>(
+        listener: (context, state) {
+          if (state is AnnotationSubmitted) {
+            XpRewardDialog.show(
+              context,
+              xpEarned: state.xpEarned,
+              currentStreak: 0,
+            ).then((_) {
+              final blocState = context.read<AnnotationBloc>().state;
+              if (blocState is AnnotationsLoaded) {
+                _nextAnnotation(blocState.annotations.length);
+              }
+            });
+          } else if (state is AnnotationError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is AnnotationLoading) {
+            return Scaffold(
+              backgroundColor: AppColors.surface,
+              body: const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.secondaryAmber500,
+                ),
+              ),
+            );
+          }
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AnnotationAppBar(
-        title: 'Audio Annotation',
-        currentXp: _totalXp,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Progress Indicator
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          if (state is AnnotationError) {
+            return Scaffold(
+              backgroundColor: AppColors.surface,
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                      const SizedBox(height: 16),
                       Text(
-                        'Task ${_currentIndex + 1} of ${_annotations.length}',
-                        style: AppFonts.bodyMedium.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
+                        'Error Loading Annotations',
+                        style: AppFonts.titleLarge.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 8),
                       Text(
-                        '+${annotation.xpReward} XP',
+                        state.message,
                         style: AppFonts.bodyMedium.copyWith(
-                          color: AppColors.secondaryAmber500,
-                          fontWeight: FontWeight.bold,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => context.read<AnnotationBloc>().add(
+                          const LoadAnnotations(type: AnnotationType.audio),
+                        ),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secondaryAmber500,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: (_currentIndex + 1) / _annotations.length,
-                    backgroundColor: AppColors.neutralSlate600_30,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.secondaryGreen500,
-                    ),
-                    minHeight: 6,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ],
+                ),
               ),
-            ),
+            );
+          }
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+          if (state is! AnnotationsLoaded || state.annotations.isEmpty) {
+            return Scaffold(
+              backgroundColor: AppColors.surface,
+              body: Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Instructions
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryIndigo600.withValues(alpha:0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primaryIndigo600.withValues(alpha:0.3),
-                        ),
+                    Icon(
+                      Icons.audiotrack,
+                      size: 64,
+                      color: AppColors.neutralSlate600.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Audio Annotations Available',
+                      style: AppFonts.titleLarge.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.info_outline,
-                                color: AppColors.primaryIndigo600,
-                                size: 20,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Check back later for new tasks',
+                      style: AppFonts.bodyMedium.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final annotations = state.annotations;
+          if (_currentIndex >= annotations.length) {
+            return Scaffold(
+              backgroundColor: AppColors.surface,
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      size: 80,
+                      color: AppColors.secondaryAmber500,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'All Done!',
+                      style: AppFonts.headlineMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'You\'ve completed all available annotations',
+                      style: AppFonts.bodyMedium.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: () => context.pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondaryAmber500,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      ),
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final annotation = annotations[_currentIndex];
+          final labels = annotation.labels;
+          final progress = (_currentIndex + 1) / annotations.length;
+
+          return Scaffold(
+            backgroundColor: AppColors.surface,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // Modern Gradient Header (Amber for Audio)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.secondaryAmber500, AppColors.secondaryAmber500.withValues(alpha: 0.8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => context.pop(),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: AppColors.neutralWhite,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Instructions',
-                                style: AppFonts.titleSmall.copyWith(
-                                  color: AppColors.primaryIndigo600,
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.audiotrack,
+                              color: AppColors.neutralWhite,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Audio Annotation',
+                                style: AppFonts.headlineMedium.copyWith(
+                                  color: AppColors.neutralWhite,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            annotation.content,
-                            style: AppFonts.bodyMedium.copyWith(
-                              color: AppColors.onBackground,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Audio Player
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primaryIndigo600, AppColors.primaryIndigo500],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        children: [
-                          // Waveform visualization placeholder
-                          Container(
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: AppColors.neutralWhite.withValues(alpha:0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.graphic_eq,
-                                color: AppColors.neutralWhite,
-                                size: 48,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Progress Slider
-                          SliderTheme(
-                            data: SliderThemeData(
-                              trackHeight: 4,
-                              thumbShape: const RoundSliderThumbShape(
-                                enabledThumbRadius: 8,
-                              ),
-                              overlayShape: const RoundSliderOverlayShape(
-                                overlayRadius: 16,
-                              ),
-                            ),
-                            child: Slider(
-                              value: _position.inSeconds.toDouble(),
-                              max: _duration.inSeconds.toDouble().clamp(1, double.infinity),
-                              activeColor: AppColors.neutralWhite,
-                              inactiveColor: AppColors.neutralWhite.withValues(alpha:0.3),
-                              onChanged: (value) {
-                                _seekTo(Duration(seconds: value.toInt()));
-                              },
-                            ),
-                          ),
-
-                          // Time Labels
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _formatDuration(_position),
-                                  style: AppFonts.bodySmall.copyWith(
-                                    color: AppColors.neutralWhite,
-                                  ),
-                                ),
-                                Text(
-                                  _formatDuration(_duration),
-                                  style: AppFonts.bodySmall.copyWith(
-                                    color: AppColors.neutralWhite,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Playback Controls
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  final newPosition = _position - const Duration(seconds: 10);
-                                  _seekTo(newPosition < Duration.zero ? Duration.zero : newPosition);
-                                },
-                                icon: const Icon(Icons.replay_10),
-                                color: AppColors.neutralWhite,
-                                iconSize: 32,
-                              ),
-                              const SizedBox(width: 16),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppColors.neutralWhite,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: IconButton(
-                                  onPressed: _togglePlayPause,
-                                  icon: Icon(
-                                    _isPlaying ? Icons.pause : Icons.play_arrow,
-                                  ),
-                                  color: AppColors.primaryIndigo600,
-                                  iconSize: 40,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              IconButton(
-                                onPressed: () {
-                                  final newPosition = _position + const Duration(seconds: 10);
-                                  _seekTo(newPosition > _duration ? _duration : newPosition);
-                                },
-                                icon: const Icon(Icons.forward_10),
-                                color: AppColors.neutralWhite,
-                                iconSize: 32,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Classification Labels (if applicable)
-                    if (annotation.labels.isNotEmpty) ...[
-                      Text(
-                        'Select Labels',
-                        style: AppFonts.titleMedium.copyWith(
-                          color: AppColors.onBackground,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: annotation.labels.map((label) {
-                          final isSelected = _selectedLabels.contains(label);
-                          return GestureDetector(
-                            onTap: () => _toggleLabel(label),
-                            child: Container(
+                            Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
+                                horizontal: 12,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.secondaryGreen500
-                                    : AppColors.background,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.secondaryGreen500
-                                      : AppColors.neutralSlate600_30,
-                                  width: 2,
-                                ),
+                                color: AppColors.neutralWhite.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (isSelected)
-                                    const Icon(
-                                      Icons.check_circle,
-                                      size: 16,
-                                      color: AppColors.onPrimary,
-                                    ),
-                                  if (isSelected) const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.star,
+                                    size: 16,
+                                    color: AppColors.neutralWhite,
+                                  ),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    label,
-                                    style: AppFonts.bodyMedium.copyWith(
-                                      color: isSelected
-                                          ? AppColors.onPrimary
-                                          : AppColors.onBackground,
-                                      fontWeight: FontWeight.w600,
+                                    '+${annotation.xpReward} XP',
+                                    style: AppFonts.labelMedium.copyWith(
+                                      color: AppColors.neutralWhite,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Task ${_currentIndex + 1} of ${annotations.length}',
+                                    style: AppFonts.bodySmall.copyWith(
+                                      color: AppColors.neutralWhite.withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: progress,
+                                      backgroundColor: AppColors.neutralWhite.withValues(alpha: 0.3),
+                                      valueColor: const AlwaysStoppedAnimation<Color>(
+                                        AppColors.neutralWhite,
+                                      ),
+                                      minHeight: 6,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
 
-                    // Transcription Input
-                    Text(
-                      'Transcription',
-                      style: AppFonts.titleMedium.copyWith(
-                        color: AppColors.onBackground,
-                        fontWeight: FontWeight.bold,
+                  // Content with Animation
+                  Expanded(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Instructions Card
+                            if (annotation.instructions != null) ...[
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondaryAmber500.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.secondaryAmber500.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.info_outline,
+                                      color: AppColors.secondaryAmber500,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        annotation.instructions!,
+                                        style: AppFonts.bodyMedium.copyWith(
+                                          color: AppColors.secondaryAmber500,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+
+                            // Audio Player Card
+                            Text(
+                              'Audio',
+                              style: AppFonts.titleMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.onBackground,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppColors.neutralSlate600_30,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  // Audio Icon/Visualization
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.secondaryAmber500.withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      _isPlaying ? Icons.graphic_eq : Icons.audiotrack,
+                                      size: 40,
+                                      color: AppColors.secondaryAmber500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  
+                                  // Content Description
+                                  Text(
+                                    annotation.content,
+                                    style: AppFonts.bodyMedium.copyWith(
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Play/Pause Button
+                                  ElevatedButton.icon(
+                                    onPressed: _togglePlayPause,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.secondaryAmber500,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 32,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(24),
+                                      ),
+                                    ),
+                                    icon: Icon(
+                                      _isPlaying ? Icons.pause : Icons.play_arrow,
+                                      color: AppColors.neutralWhite,
+                                    ),
+                                    label: Text(
+                                      _isPlaying ? 'Pause' : 'Play Audio',
+                                      style: AppFonts.buttonText.copyWith(
+                                        color: AppColors.neutralWhite,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Audio playback coming soon',
+                                    style: AppFonts.bodySmall.copyWith(
+                                      color: AppColors.onSurfaceVariant,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Labels Section
+                            Text(
+                              'Select Label',
+                              style: AppFonts.titleMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.onBackground,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: labels.map((label) {
+                                final isSelected = _selectedLabel == label;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedLabel = label;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.secondaryAmber500
+                                            : AppColors.background,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AppColors.secondaryAmber500
+                                              : AppColors.neutralSlate600_30,
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: AppColors.secondaryAmber500.withValues(alpha: 0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (isSelected)
+                                            const Padding(
+                                              padding: EdgeInsets.only(right: 8),
+                                              child: Icon(
+                                                Icons.check_circle,
+                                                size: 18,
+                                                color: AppColors.neutralWhite,
+                                              ),
+                                            ),
+                                          Text(
+                                            label,
+                                            style: AppFonts.bodyMedium.copyWith(
+                                              color: isSelected
+                                                  ? AppColors.neutralWhite
+                                                  : AppColors.onBackground,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _transcriptionController,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: 'Type what you hear...',
-                        filled: true,
-                        fillColor: AppColors.background,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.neutralSlate600_30,
-                          ),
+                  ),
+
+                  // Modern Action Buttons
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.neutralSlate600_30,
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Row(
+                        children: [
+                          // Skip Button
+                          OutlinedButton(
+                            onPressed: () => _nextAnnotation(annotations.length),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 16,
+                              ),
+                              side: const BorderSide(
+                                color: AppColors.neutralSlate600_30,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'Skip',
+                              style: AppFonts.buttonText.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryIndigo600,
-                            width: 2,
+                          const SizedBox(width: 12),
+                          // Submit Button
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _selectedLabel == null
+                                  ? null
+                                  : () => _submitAnnotation(context, annotation),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.secondaryAmber500,
+                                disabledBackgroundColor: AppColors.neutralSlate600_30,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: _selectedLabel == null ? 0 : 2,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Submit Answer',
+                                    style: AppFonts.buttonText.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      style: AppFonts.bodyMedium.copyWith(
-                        color: AppColors.onBackground,
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-
-            // Action Buttons
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.neutralSlate900_25,
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
                   ),
                 ],
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _skipAnnotation,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(
-                          color: AppColors.neutralSlate600_30,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'Skip',
-                        style: AppFonts.buttonText.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: _submitAnnotation,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryIndigo600,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'Submit Annotation',
-                        style: AppFonts.buttonText.copyWith(
-                          color: AppColors.onPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

@@ -1,12 +1,20 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/features/annotation/data/models/annotation_model.dart';
 import 'package:lexi_quest/features/projects/data/models/project_model.dart';
+import 'package:lexi_quest/features/projects/bloc/projects_bloc.dart';
+import 'package:lexi_quest/features/projects/bloc/projects_event.dart';
+import 'package:lexi_quest/features/projects/bloc/projects_state.dart';
+import 'package:lexi_quest/features/projects/ui/widgets/export_dialog.dart';
 import 'package:lexi_quest/routes.dart';
+import 'package:lexi_quest/core/config/supabase_config.dart';
+import 'package:lexi_quest/features/projects/ui/select_annotations_screen.dart';
+import 'package:lexi_quest/features/projects/ui/create_annotation_screen.dart';
+import 'package:lexi_quest/features/annotation/bloc/annotation_bloc.dart';
+import 'package:lexi_quest/features/annotation/bloc/annotation_event.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final String projectId;
@@ -21,63 +29,7 @@ class ProjectDetailsScreen extends StatefulWidget {
 }
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
-  Project? _project;
-  List<ProjectTask> _tasks = [];
-  bool _isLoading = true;
   int _selectedTabIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProjectDetails();
-  }
-
-  Future<void> _loadProjectDetails() async {
-    setState(() => _isLoading = true);
-
-    try {
-      // Load project
-      final String projectsResponse = await rootBundle.loadString('assets/data/projects.json');
-      final projectsData = json.decode(projectsResponse);
-      final List<dynamic> projectsJson = projectsData['projects'];
-      
-      final projectJson = projectsJson.firstWhere(
-        (p) => p['id'] == widget.projectId,
-        orElse: () => null,
-      );
-
-      if (projectJson != null) {
-        _project = Project.fromJson(projectJson);
-
-        // Load tasks based on project type
-        final String tasksResponse = await rootBundle.loadString('assets/data/sample_annotations.json');
-        final tasksData = json.decode(tasksResponse);
-        
-        String taskKey = '${_project!.type.name}_annotations';
-        final List<dynamic> annotationsJson = tasksData[taskKey] ?? [];
-
-        // Create project tasks
-        _tasks = annotationsJson.asMap().entries.map((entry) {
-          final annotation = AnnotationModel.fromJson(entry.value);
-          return ProjectTask(
-            id: 'task_${entry.key}',
-            projectId: widget.projectId,
-            annotation: annotation,
-            annotatedBy: entry.key % 3 == 0 ? 'user_007' : null,
-            annotatedAt: entry.key % 3 == 0 ? DateTime.now().subtract(Duration(days: entry.key)) : null,
-            isValidated: entry.key % 5 == 0,
-            validatedBy: entry.key % 5 == 0 ? 'user_006' : null,
-            validatedAt: entry.key % 5 == 0 ? DateTime.now().subtract(Duration(days: entry.key - 1)) : null,
-          );
-        }).toList();
-      }
-
-      setState(() => _isLoading = false);
-    } catch (e) {
-      debugPrint('Error loading project details: $e');
-      setState(() => _isLoading = false);
-    }
-  }
 
   Color _getTypeColor(AnnotationType type) {
     switch (type) {
@@ -101,85 +53,105 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     }
   }
 
-  void _startAnnotating() {
-    if (_project == null) return;
-
-    switch (_project!.type) {
+  void _startAnnotating(AnnotationType type, String projectId) {
+    final queryParams = '?projectId=$projectId';
+    switch (type) {
       case AnnotationType.text:
-        context.push(AppRoutes.textAnnotation);
+        context.push('${AppRoutes.textAnnotation}$queryParams');
         break;
       case AnnotationType.image:
-        context.push(AppRoutes.imageAnnotation);
+        context.push('${AppRoutes.imageAnnotation}$queryParams');
         break;
       case AnnotationType.audio:
-        context.push(AppRoutes.audioAnnotation);
+        context.push('${AppRoutes.audioAnnotation}$queryParams');
         break;
     }
   }
 
-  List<ProjectTask> _getFilteredTasks() {
+  List<ProjectTask> _getFilteredTasks(List<ProjectTask> tasks) {
     switch (_selectedTabIndex) {
       case 0: // All
-        return _tasks;
+        return tasks;
       case 1: // Pending
-        return _tasks.where((t) => t.annotatedBy == null).toList();
+        return tasks.where((t) => t.annotatedBy == null).toList();
       case 2: // Completed
-        return _tasks.where((t) => t.annotatedBy != null).toList();
+        return tasks.where((t) => t.annotatedBy != null).toList();
       default:
-        return _tasks;
+        return tasks;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.surface,
-        body: const Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primaryIndigo600,
-          ),
-        ),
-      );
-    }
-
-    if (_project == null) {
-      return Scaffold(
-        backgroundColor: AppColors.surface,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.error,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Project not found',
-                style: AppFonts.titleMedium.copyWith(
-                  color: AppColors.onBackground,
+    return BlocProvider(
+      create: (context) => ProjectsBloc()..add(LoadProjectDetails(projectId: widget.projectId)),
+      child: BlocBuilder<ProjectsBloc, ProjectsState>(
+        builder: (context, state) {
+          if (state is ProjectsLoading) {
+            return Scaffold(
+              backgroundColor: AppColors.surface,
+              body: const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryIndigo600,
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => context.pop(),
-                child: const Text('Go Back'),
+            );
+          }
+
+          if (state is ProjectsError) {
+            return Scaffold(
+              backgroundColor: AppColors.surface,
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: AppColors.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading project',
+                      style: AppFonts.titleMedium.copyWith(
+                        color: AppColors.onBackground,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      state.message,
+                      style: AppFonts.bodyMedium.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => context.pop(),
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      );
-    }
+            );
+          }
 
-    final isOwner = _project!.ownerId == 'user_006';
-    final filteredTasks = _getFilteredTasks();
+          if (state is! ProjectDetailsLoaded) {
+            return Scaffold(
+              backgroundColor: AppColors.surface,
+              body: const Center(child: CircularProgressIndicator()),
+            );
+          }
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: Column(
+          final project = state.project;
+          final tasks = state.tasks;
+          final filteredTasks = _getFilteredTasks(tasks);
+          final isOwner = project.ownerId == SupabaseConfig.currentUserId;
+
+          return Scaffold(
+            backgroundColor: AppColors.surface,
+            body: SafeArea(
+              child: Column(
           children: [
             // Header
             Container(
@@ -188,8 +160,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    _getTypeColor(_project!.type),
-                    _getTypeColor(_project!.type).withValues(alpha:0.8),
+                    _getTypeColor(project.type),
+                    _getTypeColor(project.type).withValues(alpha:0.8),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -214,7 +186,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _project!.name,
+                          project.name,
                           style: AppFonts.titleLarge.copyWith(
                             color: AppColors.onPrimary,
                             fontWeight: FontWeight.bold,
@@ -223,23 +195,54 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (isOwner)
-                        IconButton(
-                          onPressed: () {
-                            // TODO: Edit project
-                          },
-                          icon: const Icon(
-                            Icons.edit,
-                            color: AppColors.onPrimary,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isOwner)
+                            IconButton(
+                              onPressed: () => _showAddTasksDialog(context, project),
+                              icon: const Icon(
+                                Icons.add_task,
+                                color: AppColors.onPrimary,
+                              ),
+                              tooltip: 'Add Tasks',
+                            ),
+                          IconButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => ExportDialog(
+                                  project: project,
+                                  tasks: tasks,
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.download,
+                              color: AppColors.onPrimary,
+                            ),
+                            tooltip: 'Export Annotations',
                           ),
-                        ),
+                          if (isOwner)
+                            IconButton(
+                              onPressed: () {
+                                context.push('${AppRoutes.editProject}/${widget.projectId}');
+                              },
+                              icon: const Icon(
+                                Icons.edit,
+                                color: AppColors.onPrimary,
+                              ),
+                              tooltip: 'Edit Project',
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
 
                   // Description
                   Text(
-                    _project!.description,
+                    project.description,
                     style: AppFonts.bodyMedium.copyWith(
                       color: AppColors.onPrimary.withValues(alpha:0.9),
                     ),
@@ -253,19 +256,19 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     children: [
                       _buildStatChip(
                         Icons.assignment,
-                        '${_project!.completedTasks}/${_project!.totalTasks}',
+                        '${project.completedTasks}/${project.totalTasks}',
                         'Tasks',
                       ),
                       const SizedBox(width: 12),
                       _buildStatChip(
                         Icons.people,
-                        '${_project!.contributors}',
+                        '${project.contributors}',
                         'Contributors',
                       ),
                       const SizedBox(width: 12),
                       _buildStatChip(
                         Icons.star,
-                        '${_project!.xpRewardPerTask}',
+                        '${project.xpRewardPerTask}',
                         'XP/task',
                       ),
                     ],
@@ -287,7 +290,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                             ),
                           ),
                           Text(
-                            '${(_project!.completionPercentage * 100).toStringAsFixed(0)}%',
+                            '${(project.completionPercentage * 100).toStringAsFixed(0)}%',
                             style: AppFonts.bodySmall.copyWith(
                               color: AppColors.onPrimary,
                               fontWeight: FontWeight.bold,
@@ -299,7 +302,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: _project!.completionPercentage,
+                          value: project.completionPercentage,
                           backgroundColor: AppColors.neutralWhite.withValues(alpha:0.3),
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             AppColors.neutralWhite,
@@ -318,14 +321,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: _getTypeColor(_project!.type).withValues(alpha: 0.15),
+                color: _getTypeColor(project.type).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Row(
                 children: [
-                  _buildPillTab('All (${_tasks.length})', 0),
-                  _buildPillTab('Pending (${_tasks.where((t) => t.annotatedBy == null).length})', 1),
-                  _buildPillTab('Done (${_tasks.where((t) => t.annotatedBy != null).length})', 2),
+                  _buildPillTab('All (${tasks.length})', 0, project.type),
+                  _buildPillTab('Pending (${tasks.where((t) => t.annotatedBy == null).length})', 1, project.type),
+                  _buildPillTab('Done (${tasks.where((t) => t.annotatedBy != null).length})', 2, project.type),
                 ],
               ),
             ),
@@ -356,7 +359,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: filteredTasks.length,
                       itemBuilder: (context, index) {
-                        return _buildTaskCard(filteredTasks[index], isOwner);
+                        return _buildTaskCard(filteredTasks[index], isOwner, project.type, project.id);
                       },
                     ),
             ),
@@ -364,8 +367,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _startAnnotating,
-        backgroundColor: _getTypeColor(_project!.type),
+        onPressed: () => _startAnnotating(project.type, project.id),
+        backgroundColor: _getTypeColor(project.type),
         icon: const Icon(Icons.play_arrow),
         label: Text(
           'Start Annotating',
@@ -375,11 +378,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         ),
       ),
     );
+        },
+      ),
+    );
   }
 
-  Widget _buildPillTab(String label, int index) {
+  Widget _buildPillTab(String label, int index, AnnotationType type) {
     final isSelected = _selectedTabIndex == index;
-    final typeColor = _getTypeColor(_project!.type);
+    final typeColor = _getTypeColor(type);
 
     return Expanded(
       child: GestureDetector(
@@ -459,7 +465,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     );
   }
 
-  Widget _buildTaskCard(ProjectTask task, bool isOwner) {
+  Widget _buildTaskCard(ProjectTask task, bool isOwner, AnnotationType type, String projectId) {
     final isCompleted = task.annotatedBy != null;
     final needsValidation = isCompleted && !task.isValidated && isOwner;
 
@@ -481,12 +487,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: _getTypeColor(_project!.type).withValues(alpha:0.1),
+            color: _getTypeColor(type).withValues(alpha:0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
-            _getTypeIcon(_project!.type),
-            color: _getTypeColor(_project!.type),
+            _getTypeIcon(type),
+            color: _getTypeColor(type),
           ),
         ),
         title: Text(
@@ -592,10 +598,216 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           if (needsValidation) {
             // Navigate to validation
           } else if (!isCompleted) {
-            _startAnnotating();
+            _startAnnotating(type, projectId);
           }
         },
       ),
     );
+  }
+
+  void _showAddTasksDialog(BuildContext context, Project project) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          'Add Tasks to Project',
+          style: AppFonts.titleLarge.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.onBackground,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Choose how to add tasks to your project:',
+              style: AppFonts.bodyMedium.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildAddTaskOption(
+              dialogContext,
+              project,
+              icon: Icons.library_add,
+              title: 'Select Existing',
+              description: 'Choose from existing annotations',
+              color: AppColors.primaryIndigo600,
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _navigateToSelectAnnotations(context, project);
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildAddTaskOption(
+              dialogContext,
+              project,
+              icon: Icons.add_circle,
+              title: 'Create New',
+              description: 'Create a new annotation task',
+              color: AppColors.secondaryGreen500,
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _navigateToCreateAnnotation(context, project);
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildAddTaskOption(
+              dialogContext,
+              project,
+              icon: Icons.upload_file,
+              title: 'Bulk Upload',
+              description: 'Upload multiple tasks from file',
+              color: AppColors.secondaryAmber500,
+              onTap: () {
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Bulk upload feature coming soon!'),
+                    backgroundColor: AppColors.primaryIndigo600,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Cancel',
+              style: AppFonts.buttonText.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddTaskOption(
+    BuildContext context,
+    Project project, {
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppFonts.titleSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onBackground,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: AppFonts.bodySmall.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: color,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToSelectAnnotations(BuildContext context, Project project) async {
+    // Create a bloc that will load available annotations for this project
+    final annotationBloc = AnnotationBloc()
+      ..add(LoadAvailableAnnotationsForProject(
+        projectId: project.id,
+        type: project.type,
+      ));
+    
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: annotationBloc,
+          child: SelectAnnotationsScreen(project: project),
+        ),
+      ),
+    );
+    
+    // Close the bloc when done
+    annotationBloc.close();
+  }
+
+  void _navigateToCreateAnnotation(BuildContext context, Project project) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider(
+          create: (context) => AnnotationBloc(),
+          child: CreateAnnotationScreen(
+            type: project.type,
+            projectId: project.id,
+          ),
+        ),
+      ),
+    );
+    
+    if (result != null) {
+      // Annotation was created, show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Annotation created! Now select it to add to your project.'),
+            backgroundColor: AppColors.secondaryGreen500,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        
+        // Navigate to select annotations screen with the new annotation visible
+        _navigateToSelectAnnotations(context, project);
+      }
+    }
   }
 }

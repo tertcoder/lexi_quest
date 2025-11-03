@@ -12,23 +12,27 @@ class AnnotationModel extends Equatable {
   final String id;
   final AnnotationType type;
   final String content;
+  final String? instructions;
   final String? imageUrl;
   final String? audioUrl;
   final List<String> labels;
   final Map<String, dynamic>? metadata;
   final DateTime createdAt;
   final int xpReward;
+  final String? createdBy;
 
   const AnnotationModel({
     required this.id,
     required this.type,
     required this.content,
+    this.instructions,
     this.imageUrl,
     this.audioUrl,
     required this.labels,
     this.metadata,
     required this.createdAt,
     this.xpReward = 10,
+    this.createdBy,
   });
 
   factory AnnotationModel.fromJson(Map<String, dynamic> json) {
@@ -39,27 +43,37 @@ class AnnotationModel extends Equatable {
         orElse: () => AnnotationType.text,
       ),
       content: json['content'] as String,
-      imageUrl: json['imageUrl'] as String?,
-      audioUrl: json['audioUrl'] as String?,
+      instructions: json['instructions'] as String?,
+      imageUrl: json['image_url'] as String?,
+      audioUrl: json['audio_url'] as String?,
       labels: (json['labels'] as List<dynamic>).map((e) => e as String).toList(),
       metadata: json['metadata'] as Map<String, dynamic>?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      xpReward: json['xpReward'] as int? ?? 10,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      xpReward: json['xp_reward'] as int? ?? 10,
+      createdBy: json['created_by'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
+    final json = {
       'type': type.name,
       'content': content,
-      'imageUrl': imageUrl,
-      'audioUrl': audioUrl,
+      'instructions': instructions,
+      'image_url': imageUrl,
+      'audio_url': audioUrl,
       'labels': labels,
       'metadata': metadata,
-      'createdAt': createdAt.toIso8601String(),
-      'xpReward': xpReward,
+      'created_at': createdAt.toIso8601String(),
+      'xp_reward': xpReward,
+      'created_by': createdBy,
     };
+    
+    // Only include id if it's not empty (for updates)
+    if (id.isNotEmpty) {
+      json['id'] = id;
+    }
+    
+    return json;
   }
 
   @override
@@ -67,12 +81,14 @@ class AnnotationModel extends Equatable {
         id,
         type,
         content,
+        instructions,
         imageUrl,
         audioUrl,
         labels,
         metadata,
         createdAt,
         xpReward,
+        createdBy,
       ];
 }
 

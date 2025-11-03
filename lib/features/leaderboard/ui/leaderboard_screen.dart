@@ -1,11 +1,13 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/utils/app_assets.dart';
 import 'package:lexi_quest/features/leaderboard/data/models/leaderboard_model.dart';
+import 'package:lexi_quest/features/leaderboard/bloc/leaderboard_bloc.dart';
+import 'package:lexi_quest/features/leaderboard/bloc/leaderboard_event.dart';
+import 'package:lexi_quest/features/leaderboard/bloc/leaderboard_state.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -15,39 +17,7 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  List<LeaderboardEntry> _entries = [];
   LeaderboardFilter _selectedFilter = LeaderboardFilter.allTime;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadLeaderboard();
-  }
-
-  Future<void> _loadLeaderboard() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final String response = await rootBundle.loadString('assets/data/leaderboard.json');
-      final data = json.decode(response);
-      final List<dynamic> leaderboard = data['leaderboard'];
-
-      setState(() {
-        _entries = leaderboard
-            .map((json) => LeaderboardEntry.fromJson(json))
-            .toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('Error loading leaderboard: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
 
   Color _getRankColor(int rank) {
     switch (rank) {
@@ -84,9 +54,25 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: SafeArea(
+    return BlocProvider(
+      create: (context) => LeaderboardBloc()..add(const SubscribeToLeaderboard()),
+      child: BlocBuilder<LeaderboardBloc, LeaderboardState>(
+        builder: (context, state) {
+          List<LeaderboardEntry> entries = [];
+          bool isLoading = false;
+          String? errorMessage;
+
+          if (state is LeaderboardLoading) {
+            isLoading = true;
+          } else if (state is LeaderboardLoaded) {
+            entries = state.entries;
+          } else if (state is LeaderboardError) {
+            errorMessage = state.message;
+          }
+
+          return Scaffold(
+            backgroundColor: AppColors.surface,
+            body: SafeArea(
         child: Column(
           children: [
             // Header with gradient
@@ -148,13 +134,31 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
             // Leaderboard List
             Expanded(
-              child: _isLoading
+              child: isLoading
                   ? const Center(
                       child: CircularProgressIndicator(
                         color: AppColors.primaryIndigo600,
                       ),
                     )
-                  : _entries.isEmpty
+                  : errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline, size: 64, color: AppColors.secondaryRed500),
+                              const SizedBox(height: 16),
+                              Text('Error loading leaderboard', style: AppFonts.titleLarge),
+                              const SizedBox(height: 8),
+                              Text(errorMessage, style: AppFonts.bodyMedium, textAlign: TextAlign.center),
+                              const SizedBox(height: 24),
+                              ElevatedButton(
+                                onPressed: () => context.read<LeaderboardBloc>().add(const LoadLeaderboard()),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : entries.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -175,13 +179,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           ),
                         )
                       : RefreshIndicator(
-                          onRefresh: _loadLeaderboard,
+                          onRefresh: () async {
+                            context.read<LeaderboardBloc>().add(const RefreshLeaderboard());
+                          },
                           color: AppColors.primaryIndigo600,
                           child: ListView.builder(
                             padding: const EdgeInsets.all(16),
-                            itemCount: _entries.length,
+                            itemCount: entries.length,
                             itemBuilder: (context, index) {
-                              final entry = _entries[index];
+                              final entry = entries[index];
                               final isCurrentUser = entry.username == 'Bon';
 
                               return Padding(
@@ -364,8 +370,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           ),
                         ),
             ),
+            SizedBox(height: 100,)
+
           ],
         ),
+      ),
+          );
+        },
       ),
     );
   }

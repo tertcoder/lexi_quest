@@ -63,9 +63,9 @@ class Project extends Equatable {
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String,
-      ownerId: json['ownerId'] as String,
-      ownerName: json['ownerName'] as String,
-      ownerAvatar: json['ownerAvatar'] as String?,
+      ownerId: json['owner_id'] as String,
+      ownerName: json['owner_name'] as String? ?? '',
+      ownerAvatar: json['owner_avatar'] as String?,
       type: AnnotationType.values.firstWhere(
         (e) => e.name == json['type'],
         orElse: () => AnnotationType.text,
@@ -78,39 +78,43 @@ class Project extends Equatable {
         (e) => e.name == json['visibility'],
         orElse: () => ProjectVisibility.public_,
       ),
-      totalTasks: json['totalTasks'] as int,
-      completedTasks: json['completedTasks'] as int? ?? 0,
-      validatedTasks: json['validatedTasks'] as int? ?? 0,
+      totalTasks: json['total_tasks'] as int? ?? 0,
+      completedTasks: json['completed_tasks'] as int? ?? 0,
+      validatedTasks: json['validated_tasks'] as int? ?? 0,
       contributors: json['contributors'] as int? ?? 0,
-      xpRewardPerTask: json['xpRewardPerTask'] as int? ?? 10,
+      xpRewardPerTask: json['xp_reward_per_task'] as int? ?? 10,
       tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : null,
-      thumbnailUrl: json['thumbnailUrl'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
+      thumbnailUrl: json['thumbnail_url'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
+    final json = {
       'name': name,
       'description': description,
-      'ownerId': ownerId,
-      'ownerName': ownerName,
-      'ownerAvatar': ownerAvatar,
+      'owner_id': ownerId,
       'type': type.name,
       'status': status.name,
       'visibility': visibility.name,
-      'totalTasks': totalTasks,
-      'completedTasks': completedTasks,
-      'validatedTasks': validatedTasks,
+      'total_tasks': totalTasks,
+      'completed_tasks': completedTasks,
+      'validated_tasks': validatedTasks,
       'contributors': contributors,
-      'xpRewardPerTask': xpRewardPerTask,
+      'xp_reward_per_task': xpRewardPerTask,
       'tags': tags,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
-      'thumbnailUrl': thumbnailUrl,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+      'thumbnail_url': thumbnailUrl,
     };
+    
+    // Only include id if it's not empty (for updates)
+    if (id.isNotEmpty) {
+      json['id'] = id;
+    }
+    
+    return json;
   }
 
   /// Calculate completion percentage

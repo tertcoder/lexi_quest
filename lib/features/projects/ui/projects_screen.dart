@@ -1,11 +1,13 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/features/annotation/data/models/annotation_model.dart';
 import 'package:lexi_quest/features/projects/data/models/project_model.dart';
+import 'package:lexi_quest/features/projects/bloc/projects_bloc.dart';
+import 'package:lexi_quest/features/projects/bloc/projects_event.dart';
+import 'package:lexi_quest/features/projects/bloc/projects_state.dart';
 import 'package:lexi_quest/routes.dart';
 
 class ProjectsScreen extends StatefulWidget {
@@ -16,77 +18,33 @@ class ProjectsScreen extends StatefulWidget {
 }
 
 class _ProjectsScreenState extends State<ProjectsScreen> {
-  List<Project> _allProjects = [];
-  List<Project> _filteredProjects = [];
-  bool _isLoading = true;
   int _selectedTabIndex = 0;
   String _searchQuery = '';
   AnnotationType? _filterType;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadProjects();
-  }
-
-  Future<void> _loadProjects() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final String response = await rootBundle.loadString('assets/data/projects.json');
-      final data = json.decode(response);
-      final List<dynamic> projectsJson = data['projects'];
-
-      setState(() {
-        _allProjects = projectsJson.map((json) => Project.fromJson(json)).toList();
-        _filteredProjects = _allProjects;
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('Error loading projects: $e');
-      setState(() => _isLoading = false);
+  String get _currentFilter {
+    switch (_selectedTabIndex) {
+      case 0:
+        return 'all';
+      case 1:
+        return 'owned';
+      case 2:
+        return 'contributed';
+      default:
+        return 'all';
     }
-  }
-
-  void _applyFilters() {
-    setState(() {
-      _filteredProjects = _allProjects.where((project) {
-        // Tab filter
-        bool matchesTab = true;
-        if (_selectedTabIndex == 1) {
-          // My Projects
-          matchesTab = project.ownerId == 'user_006'; // Current user (Bon)
-        } else if (_selectedTabIndex == 2) {
-          // Contributed
-          matchesTab = project.contributors > 0 && project.ownerId != 'user_006';
-        }
-
-        // Search filter
-        bool matchesSearch = _searchQuery.isEmpty ||
-            project.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            project.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            project.tags.any((tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()));
-
-        // Type filter
-        bool matchesType = _filterType == null || project.type == _filterType;
-
-        return matchesTab && matchesSearch && matchesType;
-      }).toList();
-    });
   }
 
   void _onSearchChanged(String query) {
     setState(() {
       _searchQuery = query;
     });
-    _applyFilters();
   }
 
   void _onTypeFilterChanged(AnnotationType? type) {
     setState(() {
       _filterType = type;
     });
-    _applyFilters();
   }
 
   Color _getTypeColor(AnnotationType type) {
@@ -113,9 +71,38 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: SafeArea(
+    return BlocProvider(
+      create: (context) => ProjectsBloc()..add(LoadProjects(filter: _currentFilter)),
+      child: BlocBuilder<ProjectsBloc, ProjectsState>(
+        builder: (context, state) {
+          final projectsBloc = context.read<ProjectsBloc>();
+          List<Project> projects = [];
+          bool isLoading = false;
+          String? errorMessage;
+
+          if (state is ProjectsLoading) {
+            isLoading = true;
+          } else if (state is ProjectsLoaded) {
+            projects = state.projects;
+          } else if (state is ProjectsError) {
+            errorMessage = state.message;
+          }
+
+          // Apply local filters (search and type)
+          final filteredProjects = projects.where((project) {
+            bool matchesSearch = _searchQuery.isEmpty ||
+                project.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                project.description.toLowerCase().contains(_searchQuery.toLowerCase());
+
+            bool matchesType = _filterType == null ||
+                project.type == _filterType;
+
+            return matchesSearch && matchesType;
+          }).toList();
+
+          return Scaffold(
+            backgroundColor: AppColors.surface,
+            body: SafeArea(
         child: Column(
           children: [
             // Header
@@ -199,9 +186,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     ),
                     child: Row(
                       children: [
-                        _buildPillTab('All', 0),
-                        _buildPillTab('My Projects', 1),
-                        _buildPillTab('Contributed', 2),
+                        _buildPillTab('All', 0, projectsBloc),
+                        _buildPillTab('My Projects', 1, projectsBloc),
+                        _buildPillTab('Contributed', 2, projectsBloc),
                       ],
                     ),
                   ),
@@ -230,13 +217,31 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
             // Projects List
             Expanded(
-              child: _isLoading
+              child: isLoading
                   ? const Center(
                       child: CircularProgressIndicator(
                         color: AppColors.primaryIndigo600,
                       ),
                     )
-                  : _filteredProjects.isEmpty
+                  : errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline, size: 64, color: AppColors.secondaryRed500),
+                              const SizedBox(height: 16),
+                              Text('Error loading projects', style: AppFonts.titleLarge),
+                              const SizedBox(height: 8),
+                              Text(errorMessage, style: AppFonts.bodyMedium, textAlign: TextAlign.center),
+                              const SizedBox(height: 24),
+                              ElevatedButton(
+                                onPressed: () => context.read<ProjectsBloc>().add(LoadProjects(filter: _currentFilter)),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : filteredProjects.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -266,24 +271,30 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           ),
                         )
                       : RefreshIndicator(
-                          onRefresh: _loadProjects,
+                          onRefresh: () async {
+                            context.read<ProjectsBloc>().add(LoadProjects(filter: _currentFilter));
+                          },
                           color: AppColors.primaryIndigo600,
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _filteredProjects.length,
+                            itemCount: filteredProjects.length,
                             itemBuilder: (context, index) {
-                              return _buildProjectCard(_filteredProjects[index]);
+                              return _buildProjectCard(filteredProjects[index]);
                             },
                           ),
                         ),
             ),
+            const SizedBox(height: 100),
           ],
         ),
       ),
     );
+        },
+      ),
+    );
   }
 
-  Widget _buildPillTab(String label, int index) {
+  Widget _buildPillTab(String label, int index, ProjectsBloc bloc) {
     final isSelected = _selectedTabIndex == index;
 
     return Expanded(
@@ -292,7 +303,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           setState(() {
             _selectedTabIndex = index;
           });
-          _applyFilters();
+          bloc.add(LoadProjects(filter: _currentFilter));
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
