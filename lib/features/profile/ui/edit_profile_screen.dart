@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/widgets/app_input_field.dart';
@@ -8,6 +9,7 @@ import 'package:lexi_quest/features/profile/bloc/profile_bloc.dart';
 import 'package:lexi_quest/features/profile/bloc/profile_event.dart';
 import 'package:lexi_quest/features/profile/bloc/profile_state.dart';
 import 'package:lexi_quest/features/profile/data/models/user_profile_model.dart';
+import 'package:lexi_quest/features/profile/data/repositories/user_repository.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -20,6 +22,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
+  String? _newAvatarUrl;
+  bool _isUploading = false;
 
   @override
   void dispose() {
@@ -28,14 +32,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _saveProfile(BuildContext context, UserProfile currentProfile) {
+  Future<void> _pickAvatar(BuildContext context) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+
+    if (image != null) {
+      setState(() => _isUploading = true);
+
+      try {
+        final userRepository = UserRepository();
+        final avatarUrl = await userRepository.uploadAvatar(image.path);
+
+        setState(() {
+          _newAvatarUrl = avatarUrl;
+          _isUploading = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Avatar uploaded successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } catch (e) {
+        setState(() => _isUploading = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to upload avatar: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _saveProfile(
+    BuildContext context,
+    UserProfile currentProfile,
+  ) async {
     if (!_formKey.currentState!.validate()) return;
 
     final updatedProfile = UserProfile(
       userId: currentProfile.userId,
       username: _usernameController.text.trim(),
       email: _emailController.text.trim(),
-      avatarUrl: currentProfile.avatarUrl,
+      avatarUrl: _newAvatarUrl ?? currentProfile.avatarUrl,
       totalXp: currentProfile.totalXp,
       level: currentProfile.level,
       currentLevelXp: currentProfile.currentLevelXp,
@@ -48,6 +99,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
 
     context.read<ProfileBloc>().add(UpdateProfile(profile: updatedProfile));
+
+    // Wait for update to complete
+    await context.read<ProfileBloc>().stream.firstWhere(
+      (state) => state is ProfileLoaded || state is ProfileError,
+    );
+
+    if (mounted && context.read<ProfileBloc>().state is ProfileLoaded) {
+      context.pop();
+    }
   }
 
   @override
@@ -109,40 +169,65 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       const SizedBox(height: 24),
                       // Avatar Section
                       Center(
-                        child: Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 60,
-                              backgroundColor: AppColors.primaryIndigo600,
-                              child: Text(
-                                state.profile.username[0].toUpperCase(),
-                                style: AppFonts.headlineLarge.copyWith(
-                                  color: AppColors.onPrimary,
-                                  fontWeight: FontWeight.bold,
+                        child: GestureDetector(
+                          onTap: () => _pickAvatar(context),
+                          child: Stack(
+                            children: [
+                              _isUploading
+                                  ? const CircleAvatar(
+                                    radius: 60,
+                                    backgroundColor: AppColors.primaryIndigo600,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.onPrimary,
+                                    ),
+                                  )
+                                  : CircleAvatar(
+                                    radius: 60,
+                                    backgroundColor: AppColors.primaryIndigo600,
+                                    backgroundImage:
+                                        _newAvatarUrl != null
+                                            ? NetworkImage(_newAvatarUrl!)
+                                            : (state.profile.avatarUrl != null
+                                                ? NetworkImage(
+                                                  state.profile.avatarUrl!,
+                                                )
+                                                : null),
+                                    child:
+                                        (_newAvatarUrl == null &&
+                                                state.profile.avatarUrl == null)
+                                            ? Text(
+                                              state.profile.username[0]
+                                                  .toUpperCase(),
+                                              style: AppFonts.headlineLarge
+                                                  .copyWith(
+                                                    color: AppColors.onPrimary,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            )
+                                            : null,
+                                  ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primaryIndigo600,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: AppColors.onPrimary,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primaryIndigo600,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  color: AppColors.onPrimary,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 32),
-                      
+
                       // Username Field
                       Text(
                         'Username',
@@ -165,7 +250,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         },
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Email Field
                       Text(
                         'Email',
@@ -189,14 +274,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         },
                       ),
                       const SizedBox(height: 32),
-                      
+
                       // Save Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () => _saveProfile(context, state.profile),
+                          onPressed:
+                              isLoading
+                                  ? null
+                                  : () => _saveProfile(context, state.profile),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryIndigo600,
                             padding: const EdgeInsets.symmetric(vertical: 16),

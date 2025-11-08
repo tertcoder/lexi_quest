@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lexi_quest/core/config/supabase_config.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/utils/app_assets.dart';
 import 'package:lexi_quest/routes.dart';
-import 'package:lexi_quest/features/auth/bloc/auth_bloc.dart';
-import 'package:lexi_quest/features/auth/bloc/auth_event.dart';
 import 'package:lexi_quest/features/profile/bloc/profile_bloc.dart';
 import 'package:lexi_quest/features/profile/bloc/profile_event.dart';
 import 'package:lexi_quest/features/profile/bloc/profile_state.dart';
@@ -33,11 +32,8 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => ProfileBloc()..add(const LoadProfile())),
-        BlocProvider(create: (context) => AuthBloc()),
-      ],
+    return BlocProvider(
+      create: (context) => ProfileBloc()..add(const LoadProfile()),
       child: BlocBuilder<ProfileBloc, ProfileState>(
         builder: (context, state) {
           if (state is ProfileLoading) {
@@ -101,9 +97,16 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
+        child: RefreshIndicator(
+          onRefresh: () async {
+            context.read<ProfileBloc>().add(LoadProfile());
+            await context.read<ProfileBloc>().stream.firstWhere(
+              (s) => s is ProfileLoaded || s is ProfileError,
+            );
+          },
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
               // Header with gradient
               Container(
                 width: double.infinity,
@@ -565,10 +568,11 @@ class ProfileScreen extends StatelessWidget {
               ),
             const SizedBox(height: 100),
           ],
-          ),
-        ),
-      ),
-    );
+          ), // Column
+        ), // SingleChildScrollView
+        ), // RefreshIndicator
+      ), // SafeArea
+    ); // Scaffold
         },
       ),
     );
@@ -729,7 +733,7 @@ class ProfileScreen extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -748,7 +752,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text(
               'Cancel',
               style: AppFonts.buttonText.copyWith(
@@ -758,9 +762,10 @@ class ProfileScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.of(context).pop();
+              // Close confirmation dialog
+              Navigator.of(dialogContext).pop();
               
-              // Show loading
+              // Show loading dialog
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -769,14 +774,29 @@ class ProfileScreen extends StatelessWidget {
                 ),
               );
               
-              // Use AuthBloc for logout
-              context.read<AuthBloc>().add(const SignOutRequested());
-              
-              // Close dialogs
-              if (context.mounted) Navigator.of(context).pop();
-              
-              // Navigate to welcome
-              if (context.mounted) context.go(AppRoutes.welcome);
+              try {
+                // Sign out directly using Supabase
+                await SupabaseConfig.client.auth.signOut();
+                
+                // Close loading dialog
+                if (context.mounted) Navigator.of(context).pop();
+                
+                // Navigate to welcome
+                if (context.mounted) context.go(AppRoutes.welcome);
+              } catch (e) {
+                // Close loading dialog
+                if (context.mounted) Navigator.of(context).pop();
+                
+                // Show error
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Logout failed: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondaryRed500,

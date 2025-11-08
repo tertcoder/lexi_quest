@@ -5,7 +5,6 @@ import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/features/annotation/data/models/annotation_model.dart';
 import 'package:lexi_quest/features/annotation/bloc/annotation_bloc.dart';
-import 'package:lexi_quest/features/annotation/bloc/annotation_event.dart';
 import 'package:lexi_quest/features/annotation/bloc/annotation_state.dart';
 import 'package:lexi_quest/features/projects/bloc/projects_bloc.dart';
 import 'package:lexi_quest/features/projects/bloc/projects_event.dart';
@@ -25,7 +24,7 @@ class SelectAnnotationsScreen extends StatefulWidget {
 }
 
 class _SelectAnnotationsScreenState extends State<SelectAnnotationsScreen> {
-  final Set<String> _selectedAnnotationIds = {};
+  String? _selectedAnnotationId; // Changed to single selection
   String _searchQuery = '';
 
   Color _getTypeColor(AnnotationType type) {
@@ -52,38 +51,37 @@ class _SelectAnnotationsScreenState extends State<SelectAnnotationsScreen> {
 
   void _toggleSelection(String annotationId) {
     setState(() {
-      if (_selectedAnnotationIds.contains(annotationId)) {
-        _selectedAnnotationIds.remove(annotationId);
+      // Single selection: if already selected, deselect; otherwise select this one
+      if (_selectedAnnotationId == annotationId) {
+        _selectedAnnotationId = null;
       } else {
-        _selectedAnnotationIds.add(annotationId);
+        _selectedAnnotationId = annotationId;
       }
     });
   }
 
   void _addSelectedToProject() {
-    if (_selectedAnnotationIds.isEmpty) {
+    if (_selectedAnnotationId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select at least one annotation'),
+          content: Text('Please select an annotation'),
           backgroundColor: AppColors.error,
         ),
       );
       return;
     }
 
-    // Add each selected annotation to the project
-    for (final annotationId in _selectedAnnotationIds) {
-      context.read<ProjectsBloc>().add(
-            AddTaskToProject(
-              projectId: widget.project.id,
-              annotationId: annotationId,
-            ),
-          );
-    }
+    // Add the selected annotation to the project
+    context.read<ProjectsBloc>().add(
+      AddTaskToProject(
+        projectId: widget.project.id,
+        annotationId: _selectedAnnotationId!,
+      ),
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Adding ${_selectedAnnotationIds.length} task(s) to project...'),
+      const SnackBar(
+        content: Text('Adding task to project...'),
         backgroundColor: AppColors.secondaryGreen500,
       ),
     );
@@ -138,18 +136,18 @@ class _SelectAnnotationsScreenState extends State<SelectAnnotationsScreen> {
                             ),
                           ),
                         ),
-                        if (_selectedAnnotationIds.isNotEmpty)
+                        if (_selectedAnnotationId != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.neutralWhite.withValues(alpha: 0.2),
+                              color: AppColors.onPrimary.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
-                              '${_selectedAnnotationIds.length} selected',
+                              '1 selected',
                               style: AppFonts.bodySmall.copyWith(
                                 color: AppColors.onPrimary,
                                 fontWeight: FontWeight.bold,
@@ -297,7 +295,7 @@ class _SelectAnnotationsScreenState extends State<SelectAnnotationsScreen> {
                       itemCount: filteredAnnotations.length,
                       itemBuilder: (context, index) {
                         final annotation = filteredAnnotations[index];
-                        final isSelected = _selectedAnnotationIds.contains(annotation.id);
+                        final isSelected = _selectedAnnotationId == annotation.id;
 
                         return _buildAnnotationCard(annotation, isSelected);
                       },
@@ -308,13 +306,13 @@ class _SelectAnnotationsScreenState extends State<SelectAnnotationsScreen> {
             ],
           ),
         ),
-        floatingActionButton: _selectedAnnotationIds.isNotEmpty
+        floatingActionButton: _selectedAnnotationId != null
             ? FloatingActionButton.extended(
                 onPressed: _addSelectedToProject,
                 backgroundColor: _getTypeColor(widget.project.type),
                 icon: const Icon(Icons.add_task),
                 label: Text(
-                  'Add ${_selectedAnnotationIds.length} Task${_selectedAnnotationIds.length > 1 ? 's' : ''}',
+                  'Add 1 Task',
                   style: AppFonts.buttonText.copyWith(
                     color: AppColors.onPrimary,
                   ),

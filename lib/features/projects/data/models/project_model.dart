@@ -166,6 +166,7 @@ class ProjectTask extends Equatable {
   final String? validatedBy;
   final DateTime? validatedAt;
   final Map<String, dynamic>? annotationData;
+  final String validationStatus; // 'pending', 'approved', 'rejected'
 
   const ProjectTask({
     required this.id,
@@ -177,19 +178,32 @@ class ProjectTask extends Equatable {
     this.validatedBy,
     this.validatedAt,
     this.annotationData,
+    this.validationStatus = 'pending',
   });
 
   factory ProjectTask.fromJson(Map<String, dynamic> json) {
+    // Handle both camelCase and snake_case
+    final annotationJson = json['annotation'] ?? json['annotations'];
+    
+    if (annotationJson == null) {
+      throw Exception('ProjectTask requires an annotation');
+    }
+    
     return ProjectTask(
       id: json['id'] as String,
-      projectId: json['projectId'] as String,
-      annotation: AnnotationModel.fromJson(json['annotation'] as Map<String, dynamic>),
-      annotatedBy: json['annotatedBy'] as String?,
-      annotatedAt: json['annotatedAt'] != null ? DateTime.parse(json['annotatedAt'] as String) : null,
-      isValidated: json['isValidated'] as bool? ?? false,
-      validatedBy: json['validatedBy'] as String?,
-      validatedAt: json['validatedAt'] != null ? DateTime.parse(json['validatedAt'] as String) : null,
-      annotationData: json['annotationData'] as Map<String, dynamic>?,
+      projectId: (json['project_id'] ?? json['projectId']) as String,
+      annotation: AnnotationModel.fromJson(annotationJson as Map<String, dynamic>),
+      annotatedBy: (json['annotated_by'] ?? json['annotatedBy']) as String?,
+      annotatedAt: (json['annotated_at'] ?? json['annotatedAt']) != null 
+          ? DateTime.parse((json['annotated_at'] ?? json['annotatedAt']) as String) 
+          : null,
+      isValidated: (json['is_validated'] ?? json['isValidated']) as bool? ?? false,
+      validatedBy: (json['validated_by'] ?? json['validatedBy']) as String?,
+      validatedAt: (json['validated_at'] ?? json['validatedAt']) != null 
+          ? DateTime.parse((json['validated_at'] ?? json['validatedAt']) as String) 
+          : null,
+      annotationData: (json['annotation_data'] ?? json['annotationData']) as Map<String, dynamic>?,
+      validationStatus: (json['validation_status'] ?? json['validationStatus']) as String? ?? 'pending',
     );
   }
 
@@ -204,6 +218,7 @@ class ProjectTask extends Equatable {
       'validatedBy': validatedBy,
       'validatedAt': validatedAt?.toIso8601String(),
       'annotationData': annotationData,
+      'validationStatus': validationStatus,
     };
   }
 
@@ -218,5 +233,6 @@ class ProjectTask extends Equatable {
         validatedBy,
         validatedAt,
         annotationData,
+        validationStatus,
       ];
 }

@@ -11,17 +11,15 @@ import 'package:lexi_quest/features/annotation/bloc/annotation_state.dart';
 
 class ImageAnnotationScreen extends StatefulWidget {
   final String? projectId;
-  
-  const ImageAnnotationScreen({
-    super.key,
-    this.projectId,
-  });
+
+  const ImageAnnotationScreen({super.key, this.projectId});
 
   @override
   State<ImageAnnotationScreen> createState() => _ImageAnnotationScreenState();
 }
 
-class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with SingleTickerProviderStateMixin {
+class _ImageAnnotationScreenState extends State<ImageAnnotationScreen>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   String? _selectedLabel;
   late AnimationController _animationController;
@@ -53,7 +51,9 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
           content: const Text('Please select a label before submitting'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -68,6 +68,7 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
     context.read<AnnotationBloc>().add(
       SubmitAnnotation(
         annotationId: annotation.id,
+        projectId: widget.projectId,
         data: annotationData,
         xpEarned: annotation.xpReward,
       ),
@@ -91,15 +92,18 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AnnotationBloc()
-        ..add(
-          widget.projectId != null
-              ? LoadAnnotationsFromProjectTasks(
-                  projectId: widget.projectId!,
-                  type: AnnotationType.image,
-                )
-              : const LoadAnnotations(type: AnnotationType.image),
-        ),
+      create:
+          (context) =>
+              AnnotationBloc()..add(
+                widget.projectId != null
+                    ? LoadAnnotationsFromProjectTasks(
+                      projectId: widget.projectId!,
+                      type: AnnotationType.image,
+                    )
+                    : const LoadAllUnannotatedProjectTasks(
+                      type: AnnotationType.image,
+                    ),
+              ),
       child: BlocConsumer<AnnotationBloc, AnnotationState>(
         listener: (context, state) {
           if (state is AnnotationSubmitted) {
@@ -143,12 +147,18 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: AppColors.error,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'Error Loading Annotations',
                         style: AppFonts.titleLarge.copyWith(
                           fontWeight: FontWeight.bold,
+                                color: AppColors.onBackground,
+
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -161,14 +171,18 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton.icon(
-                        onPressed: () => context.read<AnnotationBloc>().add(
-                          const LoadAnnotations(type: AnnotationType.image),
-                        ),
+                        onPressed:
+                            () => context.read<AnnotationBloc>().add(
+                              const LoadAnnotations(type: AnnotationType.image),
+                            ),
                         icon: const Icon(Icons.refresh),
                         label: const Text('Retry'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.secondaryGreen500,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -242,7 +256,10 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                       onPressed: () => context.pop(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.secondaryGreen500,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
                       ),
                       child: const Text('Go Back'),
                     ),
@@ -267,7 +284,10 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppColors.secondaryGreen500, AppColors.secondaryGreen500.withValues(alpha: 0.8)],
+                        colors: [
+                          AppColors.secondaryGreen500,
+                          AppColors.secondaryGreen500.withValues(alpha: 0.8),
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -344,7 +364,9 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                                   Text(
                                     'Task ${_currentIndex + 1} of ${annotations.length}',
                                     style: AppFonts.bodySmall.copyWith(
-                                      color: AppColors.neutralWhite.withValues(alpha: 0.9),
+                                      color: AppColors.neutralWhite.withValues(
+                                        alpha: 0.9,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -352,10 +374,12 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                                     borderRadius: BorderRadius.circular(4),
                                     child: LinearProgressIndicator(
                                       value: progress,
-                                      backgroundColor: AppColors.neutralWhite.withValues(alpha: 0.3),
-                                      valueColor: const AlwaysStoppedAnimation<Color>(
-                                        AppColors.neutralWhite,
-                                      ),
+                                      backgroundColor: AppColors.neutralWhite
+                                          .withValues(alpha: 0.3),
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
+                                            AppColors.neutralWhite,
+                                          ),
                                       minHeight: 6,
                                     ),
                                   ),
@@ -382,10 +406,13 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: AppColors.secondaryGreen500.withValues(alpha: 0.1),
+                                  color: AppColors.secondaryGreen500.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: AppColors.secondaryGreen500.withValues(alpha: 0.3),
+                                    color: AppColors.secondaryGreen500
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Row(
@@ -439,46 +466,65 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
-                                child: annotation.imageUrl != null
-                                    ? Image.network(
-                                        annotation.imageUrl!,
-                                        fit: BoxFit.cover,
-                                        loadingBuilder: (context, child, loadingProgress) {
-                                          if (loadingProgress == null) return child;
-                                          return Center(
-                                            child: CircularProgressIndicator(
-                                              value: loadingProgress.expectedTotalBytes != null
-                                                  ? loadingProgress.cumulativeBytesLoaded /
-                                                      loadingProgress.expectedTotalBytes!
-                                                  : null,
-                                              color: AppColors.secondaryGreen500,
-                                            ),
-                                          );
-                                        },
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Center(
-                                            child: Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                Icon(
-                                                  Icons.broken_image,
-                                                  size: 48,
-                                                  color: AppColors.neutralSlate600,
-                                                ),
-                                                SizedBox(height: 8),
-                                                Text('Image not available'),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      )
-                                    : const Center(
-                                        child: Icon(
-                                          Icons.image_not_supported,
-                                          size: 48,
-                                          color: AppColors.neutralSlate600,
+                                child:
+                                    annotation.imageUrl != null
+                                        ? Image.network(
+                                          annotation.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (
+                                            context,
+                                            child,
+                                            loadingProgress,
+                                          ) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value:
+                                                    loadingProgress
+                                                                .expectedTotalBytes !=
+                                                            null
+                                                        ? loadingProgress
+                                                                .cumulativeBytesLoaded /
+                                                            loadingProgress
+                                                                .expectedTotalBytes!
+                                                        : null,
+                                                color:
+                                                    AppColors.secondaryGreen500,
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            return const Center(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.broken_image,
+                                                    size: 48,
+                                                    color:
+                                                        AppColors
+                                                            .neutralSlate600,
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text('Image not available'),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        )
+                                        : const Center(
+                                          child: Icon(
+                                            Icons.image_not_supported,
+                                            size: 48,
+                                            color: AppColors.neutralSlate600,
+                                          ),
                                         ),
-                                      ),
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -495,72 +541,98 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                             Wrap(
                               spacing: 10,
                               runSpacing: 10,
-                              children: labels.map((label) {
-                                final isSelected = _selectedLabel == label;
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  child: InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedLabel = label;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                        vertical: 12,
+                              children:
+                                  labels.map((label) {
+                                    final isSelected = _selectedLabel == label;
+                                    return AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 200,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? AppColors.secondaryGreen500
-                                            : AppColors.background,
+                                      child: InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedLabel = label;
+                                          });
+                                        },
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? AppColors.secondaryGreen500
-                                              : AppColors.neutralSlate600_30,
-                                          width: isSelected ? 2 : 1,
-                                        ),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: AppColors.secondaryGreen500.withValues(alpha: 0.3),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ]
-                                            : null,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (isSelected)
-                                            const Padding(
-                                              padding: EdgeInsets.only(right: 8),
-                                              child: Icon(
-                                                Icons.check_circle,
-                                                size: 18,
-                                                color: AppColors.neutralWhite,
-                                              ),
-                                            ),
-                                          Text(
-                                            label,
-                                            style: AppFonts.bodyMedium.copyWith(
-                                              color: isSelected
-                                                  ? AppColors.neutralWhite
-                                                  : AppColors.onBackground,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.bold
-                                                  : FontWeight.w500,
-                                            ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 12,
                                           ),
-                                        ],
+                                          decoration: BoxDecoration(
+                                            color:
+                                                isSelected
+                                                    ? AppColors
+                                                        .secondaryGreen500
+                                                    : AppColors.background,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color:
+                                                  isSelected
+                                                      ? AppColors
+                                                          .secondaryGreen500
+                                                      : AppColors
+                                                          .neutralSlate600_30,
+                                              width: isSelected ? 2 : 1,
+                                            ),
+                                            boxShadow:
+                                                isSelected
+                                                    ? [
+                                                      BoxShadow(
+                                                        color: AppColors
+                                                            .secondaryGreen500
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            ),
+                                                        blurRadius: 8,
+                                                        offset: const Offset(
+                                                          0,
+                                                          2,
+                                                        ),
+                                                      ),
+                                                    ]
+                                                    : null,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (isSelected)
+                                                const Padding(
+                                                  padding: EdgeInsets.only(
+                                                    right: 8,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.check_circle,
+                                                    size: 18,
+                                                    color:
+                                                        AppColors.neutralWhite,
+                                                  ),
+                                                ),
+                                              Text(
+                                                label,
+                                                style: AppFonts.bodyMedium
+                                                    .copyWith(
+                                                      color:
+                                                          isSelected
+                                                              ? AppColors
+                                                                  .neutralWhite
+                                                              : AppColors
+                                                                  .onBackground,
+                                                      fontWeight:
+                                                          isSelected
+                                                              ? FontWeight.bold
+                                                              : FontWeight.w500,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  }).toList(),
                             ),
                             const SizedBox(height: 20),
                           ],
@@ -588,7 +660,8 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                         children: [
                           // Skip Button
                           OutlinedButton(
-                            onPressed: () => _nextAnnotation(annotations.length),
+                            onPressed:
+                                () => _nextAnnotation(annotations.length),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -612,13 +685,20 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                           // Submit Button
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: _selectedLabel == null
-                                  ? null
-                                  : () => _submitAnnotation(context, annotation),
+                              onPressed:
+                                  _selectedLabel == null
+                                      ? null
+                                      : () => _submitAnnotation(
+                                        context,
+                                        annotation,
+                                      ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.secondaryGreen500,
-                                disabledBackgroundColor: AppColors.neutralSlate600_30,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                disabledBackgroundColor:
+                                    AppColors.neutralSlate600_30,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -630,12 +710,14 @@ class _ImageAnnotationScreenState extends State<ImageAnnotationScreen> with Sing
                                   const Icon(
                                     Icons.check_circle,
                                     size: 20,
+                                    color: AppColors.onPrimary,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Submit Answer',
                                     style: AppFonts.buttonText.copyWith(
                                       fontWeight: FontWeight.bold,
+                                      color: AppColors.onPrimary,
                                     ),
                                   ),
                                 ],

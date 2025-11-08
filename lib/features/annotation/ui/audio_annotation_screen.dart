@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/widgets/xp_reward_dialog.dart';
@@ -27,6 +28,9 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
   bool _isPlaying = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
 
   @override
   void initState() {
@@ -44,6 +48,7 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
   @override
   void dispose() {
     _animationController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -69,6 +74,7 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
     context.read<AnnotationBloc>().add(
       SubmitAnnotation(
         annotationId: annotation.id,
+        projectId: widget.projectId,
         data: annotationData,
         xpEarned: annotation.xpReward,
       ),
@@ -90,11 +96,48 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
     }
   }
 
-  void _togglePlayPause() {
-    setState(() {
-      _isPlaying = !_isPlaying;
+  Future<void> _togglePlayPause(String? audioUrl) async {
+    if (audioUrl == null) return;
+
+    if (_isPlaying) {
+      await _audioPlayer.pause();
+      setState(() => _isPlaying = false);
+    } else {
+      await _audioPlayer.play(UrlSource(audioUrl));
+      setState(() => _isPlaying = true);
+    }
+  }
+
+  Future<void> _initAudio(String? audioUrl) async {
+    if (audioUrl == null) return;
+
+    _audioPlayer.onDurationChanged.listen((duration) {
+      if (mounted) {
+        setState(() => _duration = duration);
+      }
     });
-    // TODO: Implement actual audio playback
+
+    _audioPlayer.onPositionChanged.listen((position) {
+      if (mounted) {
+        setState(() => _position = position);
+      }
+    });
+
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _position = Duration.zero;
+        });
+      }
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 
   @override
@@ -107,7 +150,9 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
                   projectId: widget.projectId!,
                   type: AnnotationType.audio,
                 )
-              : const LoadAnnotations(type: AnnotationType.audio),
+              : const LoadAllUnannotatedProjectTasks(
+                  type: AnnotationType.audio,
+                ),
         ),
       child: BlocConsumer<AnnotationBloc, AnnotationState>(
         listener: (context, state) {
@@ -158,6 +203,8 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
                         'Error Loading Annotations',
                         style: AppFonts.titleLarge.copyWith(
                           fontWeight: FontWeight.bold,
+                                color: AppColors.onBackground,
+
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -264,6 +311,11 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
           final annotation = annotations[_currentIndex];
           final labels = annotation.labels;
           final progress = (_currentIndex + 1) / annotations.length;
+
+          // Initialize audio player for current annotation
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _initAudio(annotation.audioUrl);
+          });
 
           return Scaffold(
             backgroundColor: AppColors.surface,
@@ -476,7 +528,7 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
 
                                   // Play/Pause Button
                                   ElevatedButton.icon(
-                                    onPressed: _togglePlayPause,
+                                    onPressed: () => _togglePlayPause(annotation.audioUrl),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.secondaryAmber500,
                                       padding: const EdgeInsets.symmetric(
@@ -501,13 +553,51 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
                                   ),
                                   
                                   const SizedBox(height: 12),
-                                  Text(
-                                    'Audio playback coming soon',
-                                    style: AppFonts.bodySmall.copyWith(
-                                      color: AppColors.onSurfaceVariant,
-                                      fontStyle: FontStyle.italic,
+                                  // Audio Progress Slider
+                                  if (annotation.audioUrl != null) ...[
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Column(
+                                        children: [
+                                          SliderTheme(
+                                            data: SliderThemeData(
+                                              activeTrackColor: AppColors.secondaryAmber500,
+                                              inactiveTrackColor: AppColors.secondaryAmber500.withValues(alpha: 0.3),
+                                              thumbColor: AppColors.secondaryAmber500,
+                                              overlayColor: AppColors.secondaryAmber500.withValues(alpha: 0.2),
+                                            ),
+                                            child: Slider(
+                                              value: _position.inSeconds.toDouble(),
+                                              max: _duration.inSeconds.toDouble() > 0 
+                                                  ? _duration.inSeconds.toDouble() 
+                                                  : 1.0,
+                                              onChanged: (value) async {
+                                                final position = Duration(seconds: value.toInt());
+                                                await _audioPlayer.seek(position);
+                                              },
+                                            ),
+                                          ),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                _formatDuration(_position),
+                                                style: AppFonts.bodySmall.copyWith(
+                                                  color: AppColors.onSurfaceVariant,
+                                                ),
+                                              ),
+                                              Text(
+                                                _formatDuration(_duration),
+                                                style: AppFonts.bodySmall.copyWith(
+                                                  color: AppColors.onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -657,15 +747,17 @@ class _AudioAnnotationScreenState extends State<AudioAnnotationScreen> with Sing
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(
-                                    Icons.check_circle,
-                                    size: 20,
+                                   const Icon(Icons.check_circle, size: 20,
+            color: AppColors.onPrimary,
+                                  
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Submit Answer',
                                     style: AppFonts.buttonText.copyWith(
                                       fontWeight: FontWeight.bold,
+            color: AppColors.onPrimary,
+
                                     ),
                                   ),
                                 ],

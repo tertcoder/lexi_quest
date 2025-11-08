@@ -24,13 +24,13 @@ class LeaderboardEntry extends Equatable {
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
     return LeaderboardEntry(
-      userId: json['userId'] as String,
+      userId: json['user_id'] as String,
       username: json['username'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
-      totalXp: json['totalXp'] as int,
+      avatarUrl: json['avatar_url'] as String?,
+      totalXp: json['total_xp'] as int,
       level: json['level'] as int,
       rank: json['rank'] as int,
-      annotationsCompleted: json['annotationsCompleted'] as int,
+      annotationsCompleted: json['annotations_completed'] as int,
       streak: json['streak'] as int? ?? 0,
     );
   }
@@ -39,11 +39,11 @@ class LeaderboardEntry extends Equatable {
     return {
       'userId': userId,
       'username': username,
-      'avatarUrl': avatarUrl,
-      'totalXp': totalXp,
+      'avatar_url': avatarUrl,
+      'total_xp': totalXp,
       'level': level,
       'rank': rank,
-      'annotationsCompleted': annotationsCompleted,
+      'annotations_completed': annotationsCompleted,
       'streak': streak,
     };
   }

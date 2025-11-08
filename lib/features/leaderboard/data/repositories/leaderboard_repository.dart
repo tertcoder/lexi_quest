@@ -21,7 +21,30 @@ class LeaderboardRepository extends BaseRepository {
   /// Refresh leaderboard
   Future<void> refreshLeaderboard() async {
     return handleVoidError(() async {
-      await client.rpc('refresh_leaderboard');
+      // Instead of calling RPC function, manually rebuild leaderboard
+      // 1. Clear existing leaderboard
+      await client.from('leaderboard').delete().neq('user_id', '00000000-0000-0000-0000-000000000000');
+      
+      // 2. Get all users ordered by total_xp
+      final users = await client
+          .from('users')
+          .select('id, username, avatar_url, total_xp, level, annotations_completed, streak')
+          .order('total_xp', ascending: false);
+      
+      // 3. Insert into leaderboard with ranks
+      int rank = 1;
+      for (var user in users) {
+        await client.from('leaderboard').insert({
+          'user_id': user['id'],
+          'username': user['username'],
+          'avatar_url': user['avatar_url'],
+          'total_xp': user['total_xp'],
+          'level': user['level'],
+          'rank': rank++,
+          'annotations_completed': user['annotations_completed'],
+          'streak': user['streak'],
+        });
+      }
     });
   }
   

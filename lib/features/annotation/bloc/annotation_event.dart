@@ -97,3 +97,17 @@ class LoadAnnotationsFromProjectTasks extends AnnotationEvent {
   @override
   List<Object?> get props => [projectId, type];
 }
+
+/// Load all unannotated project tasks (for home page quick actions)
+class LoadAllUnannotatedProjectTasks extends AnnotationEvent {
+  final AnnotationType type;
+  final int limit;
+
+  const LoadAllUnannotatedProjectTasks({
+    required this.type,
+    this.limit = 50,
+  });
+
+  @override
+  List<Object?> get props => [type, limit];
+}

@@ -13,6 +13,7 @@ class AnnotationBloc extends Bloc<AnnotationEvent, AnnotationState> {
     on<LoadAnnotations>(_onLoadAnnotations);
     on<LoadAvailableAnnotationsForProject>(_onLoadAvailableAnnotationsForProject);
     on<LoadAnnotationsFromProjectTasks>(_onLoadAnnotationsFromProjectTasks);
+    on<LoadAllUnannotatedProjectTasks>(_onLoadAllUnannotatedProjectTasks);
     on<SubmitAnnotation>(_onSubmitAnnotation);
     on<UploadAnnotationImage>(_onUploadAnnotationImage);
     on<UploadAnnotationAudio>(_onUploadAnnotationAudio);
@@ -64,6 +65,23 @@ class AnnotationBloc extends Bloc<AnnotationEvent, AnnotationState> {
       final annotations = await _annotationRepository.getAnnotationsFromProjectTasks(
         projectId: event.projectId,
         type: event.type,
+      );
+      emit(AnnotationsLoaded(annotations: annotations));
+    } catch (e) {
+      emit(AnnotationError(message: e.toString()));
+    }
+  }
+
+  /// Handle load all unannotated project tasks
+  Future<void> _onLoadAllUnannotatedProjectTasks(
+    LoadAllUnannotatedProjectTasks event,
+    Emitter<AnnotationState> emit,
+  ) async {
+    emit(const AnnotationLoading());
+    try {
+      final annotations = await _annotationRepository.getAllUnannotatedProjectTasks(
+        type: event.type,
+        limit: event.limit,
       );
       emit(AnnotationsLoaded(annotations: annotations));
     } catch (e) {

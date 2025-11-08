@@ -150,11 +150,13 @@ class AppRoutes {
         path: profile,
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
-      ),
-      GoRoute(
-        path: editProfile,
-        name: 'edit-profile',
-        builder: (context, state) => const EditProfileScreen(),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            name: 'edit-profile',
+            builder: (context, state) => const EditProfileScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: leaderboard,

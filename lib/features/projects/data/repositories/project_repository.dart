@@ -9,16 +9,51 @@ class ProjectRepository extends BaseRepository {
     return handleError(() async {
       final userId = SupabaseConfig.currentUserId;
       
+      // For contributed filter, we need to get projects where user has completed tasks
+      if (filter == 'contributed') {
+        // Get distinct project IDs where user has annotated tasks
+        final contributedProjectIds = await client
+            .from('project_tasks')
+            .select('project_id')
+            .eq('annotated_by', userId!)
+            .then((response) => (response as List)
+                .map((item) => item['project_id'] as String)
+                .toSet()
+                .toList());
+        
+        // If no contributions, return empty list
+        if (contributedProjectIds.isEmpty) {
+          return [];
+        }
+        
+        // Get projects where user has contributed
+        final response = await client
+            .from('projects')
+            .select('*, users!owner_id(username, avatar_url)')
+            .inFilter('id', contributedProjectIds)
+            .order('created_at', ascending: false);
+        
+        return (response as List).map((json) {
+          final projectData = Map<String, dynamic>.from(json);
+          if (json['users'] != null) {
+            projectData['owner_name'] = json['users']['username'] ?? '';
+            projectData['owner_avatar'] = json['users']['avatar_url'];
+          } else {
+            projectData['owner_name'] = '';
+            projectData['owner_avatar'] = null;
+          }
+          projectData.remove('users');
+          return Project.fromJson(projectData);
+        }).toList();
+      }
+      
+      // For 'all' and 'owned' filters
       var query = client
           .from('projects')
           .select('*, users!owner_id(username, avatar_url)');
       
-      // Apply filter
       if (filter == 'owned') {
         query = query.eq('owner_id', userId!);
-      } else if (filter == 'contributed') {
-        // For now, show all projects (can be enhanced later with contributors table)
-        query = query.neq('owner_id', userId!);
       }
       // 'all' filter doesn't need additional conditions
       
@@ -101,7 +136,10 @@ class ProjectRepository extends BaseRepository {
           .select('*, annotations(*)')
           .eq('project_id', projectId);
       
-      return (response as List).map((json) {
+      return (response as List).where((json) {
+        // Filter out tasks where annotation is null (deleted or missing)
+        return json['annotations'] != null;
+      }).map((json) {
         final taskData = Map<String, dynamic>.from(json);
         taskData['annotation'] = json['annotations'];
         taskData.remove('annotations');
@@ -136,11 +174,61 @@ class ProjectRepository extends BaseRepository {
         'annotation_id': annotationId,
       });
       
-      // Update total tasks count
+      // Update total tasks count - get current count and increment
+      final project = await client
+          .from('projects')
+          .select('total_tasks')
+          .eq('id', projectId)
+          .single();
+      
       await client
           .from('projects')
-          .update({'total_tasks': client.rpc('increment')})
+          .update({'total_tasks': (project['total_tasks'] as int) + 1})
           .eq('id', projectId);
+    });
+  }
+
+  /// Validate task (approve or reject)
+  Future<void> validateTask({
+    required String taskId,
+    required String projectId,
+    required bool approved,
+  }) async {
+    return handleVoidError(() async {
+      final userId = SupabaseConfig.currentUserId;
+      if (userId == null) throw Exception('No user logged in');
+
+      final status = approved ? 'approved' : 'rejected';
+
+      // Update task validation status
+      await client.from('project_tasks').update({
+        'validation_status': status,
+        'validated_by': userId,
+        'validated_at': DateTime.now().toIso8601String(),
+        'is_validated': approved,
+      }).eq('id', taskId);
+
+      // If approved, increment completed_tasks
+      if (approved) {
+        final project = await client
+            .from('projects')
+            .select('completed_tasks')
+            .eq('id', projectId)
+            .single();
+
+        await client.from('projects').update({
+          'completed_tasks': (project['completed_tasks'] as int) + 1,
+        }).eq('id', projectId);
+      }
+
+      // If rejected, reset the task
+      if (!approved) {
+        await client.from('project_tasks').update({
+          'annotated_by': null,
+          'annotated_at': null,
+          'annotation_data': null,
+        }).eq('id', taskId);
+      }
     });
   }
 }

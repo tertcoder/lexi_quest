@@ -11,17 +11,15 @@ import 'package:lexi_quest/features/annotation/bloc/annotation_state.dart';
 
 class TextAnnotationScreen extends StatefulWidget {
   final String? projectId;
-  
-  const TextAnnotationScreen({
-    super.key,
-    this.projectId,
-  });
+
+  const TextAnnotationScreen({super.key, this.projectId});
 
   @override
   State<TextAnnotationScreen> createState() => _TextAnnotationScreenState();
 }
 
-class _TextAnnotationScreenState extends State<TextAnnotationScreen> with SingleTickerProviderStateMixin {
+class _TextAnnotationScreenState extends State<TextAnnotationScreen>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   String? _selectedLabel;
   late AnimationController _animationController;
@@ -53,7 +51,9 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
           content: const Text('Please select a label before submitting'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -68,6 +68,7 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
     context.read<AnnotationBloc>().add(
       SubmitAnnotation(
         annotationId: annotation.id,
+        projectId: widget.projectId,
         data: annotationData,
         xpEarned: annotation.xpReward,
       ),
@@ -91,15 +92,18 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AnnotationBloc()
-        ..add(
-          widget.projectId != null
-              ? LoadAnnotationsFromProjectTasks(
-                  projectId: widget.projectId!,
-                  type: AnnotationType.text,
-                )
-              : const LoadAnnotations(type: AnnotationType.text),
-        ),
+      create:
+          (context) =>
+              AnnotationBloc()..add(
+                widget.projectId != null
+                    ? LoadAnnotationsFromProjectTasks(
+                      projectId: widget.projectId!,
+                      type: AnnotationType.text,
+                    )
+                    : const LoadAllUnannotatedProjectTasks(
+                      type: AnnotationType.text,
+                    ),
+              ),
       child: BlocConsumer<AnnotationBloc, AnnotationState>(
         listener: (context, state) {
           if (state is AnnotationSubmitted) {
@@ -143,12 +147,17 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: AppColors.error,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'Error Loading Annotations',
                         style: AppFonts.titleLarge.copyWith(
                           fontWeight: FontWeight.bold,
+                                color: AppColors.onBackground,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -161,14 +170,19 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton.icon(
-                        onPressed: () => context.read<AnnotationBloc>().add(
-                          const LoadAnnotations(type: AnnotationType.text),
-                        ),
+                        onPressed:
+                            () => context.read<AnnotationBloc>().add(
+                              const LoadAnnotations(type: AnnotationType.text),
+                            ),
                         icon: const Icon(Icons.refresh),
                         label: const Text('Retry'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryIndigo600,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          foregroundColor: AppColors.onPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -195,6 +209,7 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                       'No Annotations Available',
                       style: AppFonts.titleLarge.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: AppColors.neutralSlate600,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -242,7 +257,10 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                       onPressed: () => context.pop(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryIndigo600,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
                       ),
                       child: const Text('Go Back'),
                     ),
@@ -267,7 +285,10 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                     padding: const EdgeInsets.all(20),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppColors.primaryIndigo600, AppColors.primaryIndigo500],
+                        colors: [
+                          AppColors.primaryIndigo600,
+                          AppColors.primaryIndigo500,
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -344,7 +365,9 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                                   Text(
                                     'Task ${_currentIndex + 1} of ${annotations.length}',
                                     style: AppFonts.bodySmall.copyWith(
-                                      color: AppColors.onPrimary.withValues(alpha: 0.9),
+                                      color: AppColors.onPrimary.withValues(
+                                        alpha: 0.9,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -352,10 +375,12 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                                     borderRadius: BorderRadius.circular(4),
                                     child: LinearProgressIndicator(
                                       value: progress,
-                                      backgroundColor: AppColors.neutralWhite.withValues(alpha: 0.3),
-                                      valueColor: const AlwaysStoppedAnimation<Color>(
-                                        AppColors.neutralWhite,
-                                      ),
+                                      backgroundColor: AppColors.neutralWhite
+                                          .withValues(alpha: 0.3),
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
+                                            AppColors.neutralWhite,
+                                          ),
                                       minHeight: 6,
                                     ),
                                   ),
@@ -382,10 +407,13 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryIndigo600.withValues(alpha: 0.1),
+                                  color: AppColors.primaryIndigo600.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: AppColors.primaryIndigo600.withValues(alpha: 0.3),
+                                    color: AppColors.primaryIndigo600
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Row(
@@ -459,72 +487,96 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                             Wrap(
                               spacing: 10,
                               runSpacing: 10,
-                              children: labels.map((label) {
-                                final isSelected = _selectedLabel == label;
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  child: InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedLabel = label;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                        vertical: 12,
+                              children:
+                                  labels.map((label) {
+                                    final isSelected = _selectedLabel == label;
+                                    return AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 200,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? AppColors.primaryIndigo600
-                                            : AppColors.background,
+                                      child: InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedLabel = label;
+                                          });
+                                        },
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? AppColors.primaryIndigo600
-                                              : AppColors.neutralSlate600_30,
-                                          width: isSelected ? 2 : 1,
-                                        ),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: AppColors.primaryIndigo600.withValues(alpha: 0.3),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ]
-                                            : null,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (isSelected)
-                                            const Padding(
-                                              padding: EdgeInsets.only(right: 8),
-                                              child: Icon(
-                                                Icons.check_circle,
-                                                size: 18,
-                                                color: AppColors.onPrimary,
-                                              ),
-                                            ),
-                                          Text(
-                                            label,
-                                            style: AppFonts.bodyMedium.copyWith(
-                                              color: isSelected
-                                                  ? AppColors.onPrimary
-                                                  : AppColors.onBackground,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.bold
-                                                  : FontWeight.w500,
-                                            ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 12,
                                           ),
-                                        ],
+                                          decoration: BoxDecoration(
+                                            color:
+                                                isSelected
+                                                    ? AppColors.primaryIndigo600
+                                                    : AppColors.background,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color:
+                                                  isSelected
+                                                      ? AppColors
+                                                          .primaryIndigo600
+                                                      : AppColors
+                                                          .neutralSlate600_30,
+                                              width: isSelected ? 2 : 1,
+                                            ),
+                                            boxShadow:
+                                                isSelected
+                                                    ? [
+                                                      BoxShadow(
+                                                        color: AppColors
+                                                            .primaryIndigo600
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            ),
+                                                        blurRadius: 8,
+                                                        offset: const Offset(
+                                                          0,
+                                                          2,
+                                                        ),
+                                                      ),
+                                                    ]
+                                                    : null,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (isSelected)
+                                                const Padding(
+                                                  padding: EdgeInsets.only(
+                                                    right: 8,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.check_circle,
+                                                    size: 18,
+                                                    color: AppColors.onPrimary,
+                                                  ),
+                                                ),
+                                              Text(
+                                                label,
+                                                style: AppFonts.bodyMedium
+                                                    .copyWith(
+                                                      color:
+                                                          isSelected
+                                                              ? AppColors
+                                                                  .onPrimary
+                                                              : AppColors
+                                                                  .onBackground,
+                                                      fontWeight:
+                                                          isSelected
+                                                              ? FontWeight.bold
+                                                              : FontWeight.w500,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  }).toList(),
                             ),
                             const SizedBox(height: 20),
                           ],
@@ -552,7 +604,8 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                         children: [
                           // Skip Button
                           OutlinedButton(
-                            onPressed: () => _nextAnnotation(annotations.length),
+                            onPressed:
+                                () => _nextAnnotation(annotations.length),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -576,13 +629,20 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                           // Submit Button
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: _selectedLabel == null
-                                  ? null
-                                  : () => _submitAnnotation(context, annotation),
+                              onPressed:
+                                  _selectedLabel == null
+                                      ? null
+                                      : () => _submitAnnotation(
+                                        context,
+                                        annotation,
+                                      ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryIndigo600,
-                                disabledBackgroundColor: AppColors.neutralSlate600_30,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                disabledBackgroundColor:
+                                    AppColors.neutralSlate600_30,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -591,15 +651,17 @@ class _TextAnnotationScreenState extends State<TextAnnotationScreen> with Single
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(
-                                    Icons.check_circle,
-                                    size: 20,
+                                  const Icon(Icons.check_circle, size: 20,
+            color: AppColors.onPrimary,
+                                  
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Submit Answer',
                                     style: AppFonts.buttonText.copyWith(
                                       fontWeight: FontWeight.bold,
+            color: AppColors.onPrimary,
+
                                     ),
                                   ),
                                 ],

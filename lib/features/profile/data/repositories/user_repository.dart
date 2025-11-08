@@ -56,9 +56,50 @@ class UserRepository extends BaseRepository {
       final userId = SupabaseConfig.currentUserId;
       if (userId == null) throw Exception('No user logged in');
       
-      await client.rpc('update_user_streak', params: {
-        'p_user_id': userId,
-      });
+      // Get user's last active date and current streak
+      final userResponse = await client
+          .from('users')
+          .select('last_active_at, streak')
+          .eq('id', userId)
+          .single();
+      
+      final lastActiveAt = userResponse['last_active_at'] != null
+          ? DateTime.parse(userResponse['last_active_at'] as String)
+          : null;
+      final currentStreak = userResponse['streak'] as int;
+      
+      final today = DateTime.now();
+      final todayDate = DateTime(today.year, today.month, today.day);
+      
+      if (lastActiveAt != null) {
+        final lastActiveDate = DateTime(
+          lastActiveAt.year,
+          lastActiveAt.month,
+          lastActiveAt.day,
+        );
+        final daysDifference = todayDate.difference(lastActiveDate).inDays;
+        
+        if (daysDifference == 1) {
+          // Consecutive day - increment streak
+          await client.from('users').update({
+            'streak': currentStreak + 1,
+            'last_active_at': DateTime.now().toIso8601String(),
+          }).eq('id', userId);
+        } else if (daysDifference > 1) {
+          // Streak broken - reset to 1
+          await client.from('users').update({
+            'streak': 1,
+            'last_active_at': DateTime.now().toIso8601String(),
+          }).eq('id', userId);
+        }
+        // If daysDifference == 0, same day - do nothing
+      } else {
+        // First time - set streak to 1
+        await client.from('users').update({
+          'streak': 1,
+          'last_active_at': DateTime.now().toIso8601String(),
+        }).eq('id', userId);
+      }
     });
   }
   

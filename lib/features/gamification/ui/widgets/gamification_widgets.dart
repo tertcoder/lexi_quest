@@ -1,1 +1,0 @@
-// Gamification widgets placeholder

@@ -8,7 +8,6 @@ class ActivityRepository extends BaseRepository {
     return handleError(() async {
       final userId = SupabaseConfig.currentUserId;
       if (userId == null) throw Exception('No user logged in');
-      
       final response = await client
           .from('activities')
           .select()

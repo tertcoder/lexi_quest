@@ -5,6 +5,7 @@ import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/features/annotation/data/models/annotation_model.dart';
 import 'package:lexi_quest/features/projects/data/models/project_model.dart';
+import 'package:lexi_quest/features/projects/data/repositories/project_repository.dart';
 import 'package:lexi_quest/features/projects/bloc/projects_bloc.dart';
 import 'package:lexi_quest/features/projects/bloc/projects_event.dart';
 import 'package:lexi_quest/features/projects/bloc/projects_state.dart';
@@ -576,15 +577,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         ),
         trailing: needsValidation
             ? IconButton(
-                onPressed: () {
-                  // TODO: Navigate to validation screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Validation feature coming soon!'),
-                      backgroundColor: AppColors.primaryIndigo600,
-                    ),
-                  );
-                },
+                onPressed: () => _showValidationDialog(task, projectId),
                 icon: const Icon(
                   Icons.rate_review,
                   color: AppColors.secondaryAmber500,
@@ -596,7 +589,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               ),
         onTap: () {
           if (needsValidation) {
-            // Navigate to validation
+            _showValidationDialog(task, projectId);
           } else if (!isCompleted) {
             _startAnnotating(type, projectId);
           }
@@ -759,6 +752,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   }
 
   void _navigateToSelectAnnotations(BuildContext context, Project project) async {
+    // Get the ProjectsBloc before navigation
+    final projectsBloc = context.read<ProjectsBloc>();
+    
     // Create a bloc that will load available annotations for this project
     final annotationBloc = AnnotationBloc()
       ..add(LoadAvailableAnnotationsForProject(
@@ -769,8 +765,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BlocProvider.value(
-          value: annotationBloc,
+        builder: (context) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: annotationBloc),
+            BlocProvider.value(value: projectsBloc),
+          ],
           child: SelectAnnotationsScreen(project: project),
         ),
       ),
@@ -789,6 +788,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           child: CreateAnnotationScreen(
             type: project.type,
             projectId: project.id,
+            projectXp: project.xpRewardPerTask,
           ),
         ),
       ),
@@ -807,6 +807,148 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         
         // Navigate to select annotations screen with the new annotation visible
         _navigateToSelectAnnotations(context, project);
+      }
+    }
+  }
+
+  void _showValidationDialog(ProjectTask task, String projectId) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.background,
+        title: Text(
+          'Validate Task',
+          style: AppFonts.titleLarge.copyWith(
+            color: AppColors.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Review this completed task:',
+              style: AppFonts.bodyMedium.copyWith(
+                color: AppColors.onBackground,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.neutralSlate600_30),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Content: ${task.annotation.content}',
+                    style: AppFonts.bodySmall.copyWith(
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                  if (task.annotationData != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Answer: ${task.annotationData}',
+                      style: AppFonts.bodySmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Do you want to approve or reject this task?',
+              style: AppFonts.bodySmall.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'Cancel',
+              style: AppFonts.buttonText.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await _validateTask(task.id, projectId, false);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondaryRed500,
+            ),
+            child: Text(
+              'Reject',
+              style: AppFonts.buttonText.copyWith(
+                color: AppColors.onPrimary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await _validateTask(task.id, projectId, true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondaryGreen500,
+            ),
+            child: Text(
+              'Approve',
+              style: AppFonts.buttonText.copyWith(
+                color: AppColors.onPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _validateTask(String taskId, String projectId, bool approved) async {
+    try {
+      final repository = ProjectRepository();
+      await repository.validateTask(
+        taskId: taskId,
+        projectId: projectId,
+        approved: approved,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              approved ? 'Task approved!' : 'Task rejected and reset.',
+            ),
+            backgroundColor: approved
+                ? AppColors.secondaryGreen500
+                : AppColors.secondaryAmber500,
+          ),
+        );
+
+        // Reload project details
+        context.read<ProjectsBloc>().add(LoadProjectDetails(projectId: projectId));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }

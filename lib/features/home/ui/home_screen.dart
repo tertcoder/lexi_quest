@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
 import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/utils/app_assets.dart';
@@ -10,6 +11,9 @@ import 'package:lexi_quest/routes.dart';
 import 'package:lexi_quest/features/profile/bloc/profile_bloc.dart';
 import 'package:lexi_quest/features/profile/bloc/profile_event.dart';
 import 'package:lexi_quest/features/profile/bloc/profile_state.dart';
+import 'package:lexi_quest/features/home/bloc/activity_bloc.dart';
+import 'package:lexi_quest/features/home/bloc/activity_event.dart';
+import 'package:lexi_quest/features/home/bloc/activity_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,9 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Load profile once when screen initializes
+    // Load profile and activities once when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProfileBloc>().add(const LoadProfile());
+      context.read<ActivityBloc>().add(const LoadActivities());
     });
   }
 
@@ -40,6 +45,27 @@ class _HomeScreenState extends State<HomeScreen> {
       return "Good Evening";
     } else {
       return "Good Night";
+    }
+  }
+
+  /// Format timestamp to relative time
+  String _formatTime(dynamic timestamp) {
+    if (timestamp == null) return 'Just now';
+    
+    try {
+      final DateTime dateTime = timestamp is DateTime 
+          ? timestamp 
+          : DateTime.parse(timestamp.toString());
+      
+      final Duration diff = DateTime.now().difference(dateTime);
+      
+      if (diff.inMinutes < 1) return 'Just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      if (diff.inDays < 7) return '${diff.inDays}d ago';
+      return '${(diff.inDays / 7).floor()}w ago';
+    } catch (e) {
+      return 'Just now';
     }
   }
 
@@ -73,9 +99,22 @@ class _HomeScreenState extends State<HomeScreen> {
         return Scaffold(
           backgroundColor: AppColors.surface,
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                context.read<ProfileBloc>().add(LoadProfile());
+                context.read<ActivityBloc>().add(const LoadActivities());
+                await Future.wait([
+                  context.read<ProfileBloc>().stream.firstWhere(
+                    (s) => s is ProfileLoaded || s is ProfileError,
+                  ),
+                  context.read<ActivityBloc>().stream.firstWhere(
+                    (s) => s is ActivityLoaded || s is ActivityError,
+                  ),
+                ]);
+              },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
                 children: [
                   const SizedBox(height: 16),
                   // Header Row with Profile and Notification
@@ -108,15 +147,33 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    "${_getTimeBasedGreeting()} $username",
-                                    style: AppFonts.titleMedium.copyWith(
-                                      color: AppColors.onBackground,
-                                      fontSize: 18,
+                                  // Show skeleton loading if profile is loading
+                                  if (state is ProfileLoading)
+                                    Shimmer.fromColors(
+                                      baseColor: Colors.grey[300]!,
+                                      highlightColor: Colors.grey[100]!,
+                                      child: Container(
+                                        height: 20,
+                                        width: 150,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    Text(
+                                      state is ProfileLoaded 
+                                          ? "${_getTimeBasedGreeting()}, ${state.profile.username}!"
+                                          : _getTimeBasedGreeting(),
+                                      style: AppFonts.titleMedium.copyWith(
+                                        color: AppColors.onBackground,
+                                        fontSize: 18,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                  const SizedBox(height: 4),
                                   Text(
                                     "Time to annotate!",
                                     style: AppFonts.bodyMedium.copyWith(
@@ -459,51 +516,64 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 12),
 
                   // Activities List
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.neutralSlate600_30),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.history,
-                            size: 48,
-                            color: AppColors.onSurfaceVariant.withValues(
-                              alpha: 0.5,
-                            ),
+                  BlocBuilder<ActivityBloc, ActivityState>(
+                    builder: (context, activityState) {
+                      if (activityState is ActivityLoading) {
+                        return Container(
+                          padding: const EdgeInsets.all(32),
+                          child: const Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      
+                      if (activityState is ActivityLoaded && activityState.activities.isNotEmpty) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.neutralSlate600_30),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No recent activities',
-                            style: AppFonts.bodyMedium.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
+                          child: Column(
+                            children: activityState.activities.map((activity) {
+                              return _buildActivityItem(
+                                icon: Icons.check_circle,
+                                iconColor: AppColors.success,
+                                title: activity['title'] ?? 'Activity',
+                                subtitle: activity['activity_type'] ?? '',
+                                time: _formatTime(activity['created_at']),
+                                xp: activity['xp_earned'] != null ? '+${activity['xp_earned']} XP' : null,
+                              );
+                            }).toList(),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Start annotating to see your activities here!',
-                            style: AppFonts.bodySmall.copyWith(
-                              color: AppColors.onSurfaceVariant.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
-                            textAlign: TextAlign.center,
+                        );
+                      }
+                      
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.neutralSlate600_30),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            children: [
+                              Icon(Icons.history, size: 48, color: AppColors.onSurfaceVariant.withValues(alpha: 0.5)),
+                              const SizedBox(height: 16),
+                              Text('No recent activities', style: AppFonts.bodyMedium.copyWith(color: AppColors.onSurfaceVariant)),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 100),
                 ],
-              ),
-            ),
-          ),
-        );
+              ), // Column
+            ), // SingleChildScrollView
+            ), // RefreshIndicator
+          ), // SafeArea
+        ); // Scaffold
       },
     );
   }
