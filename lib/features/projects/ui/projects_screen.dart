@@ -72,7 +72,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ProjectsBloc()..add(LoadProjects(filter: _currentFilter)),
+      create: (context) =>
+          ProjectsBloc()..add(LoadProjects(filter: _currentFilter)),
       child: BlocBuilder<ProjectsBloc, ProjectsState>(
         builder: (context, state) {
           final projectsBloc = context.read<ProjectsBloc>();
@@ -90,12 +91,17 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
           // Apply local filters (search and type)
           final filteredProjects = projects.where((project) {
-            bool matchesSearch = _searchQuery.isEmpty ||
-                project.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                project.description.toLowerCase().contains(_searchQuery.toLowerCase());
+            bool matchesSearch =
+                _searchQuery.isEmpty ||
+                project.name.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ) ||
+                project.description.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                );
 
-            bool matchesType = _filterType == null ||
-                project.type == _filterType;
+            bool matchesType =
+                _filterType == null || project.type == _filterType;
 
             return matchesSearch && matchesType;
           }).toList();
@@ -103,192 +109,203 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           return Scaffold(
             backgroundColor: AppColors.surface,
             body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryIndigo600, AppColors.primaryIndigo500],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
-                ),
-              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Projects',
-                        style: AppFonts.headlineMedium.copyWith(
-                          color: AppColors.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          context.push(AppRoutes.createProject);
-                        },
-                        icon: const Icon(
-                          Icons.add_circle,
-                          color: AppColors.onPrimary,
-                          size: 32,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Search Bar
+                  // Header
                   Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.neutralWhite.withValues(alpha:0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      onChanged: _onSearchChanged,
-                      style: AppFonts.bodyMedium.copyWith(
-                        color: AppColors.onPrimary,
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryIndigo600,
+                          AppColors.primaryIndigo500,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'Search projects...',
-                        hintStyle: AppFonts.bodyMedium.copyWith(
-                          color: AppColors.onPrimary.withValues(alpha:0.7),
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: AppColors.onPrimary,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Modern Pill-Style Tabs
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.neutralWhite.withValues(alpha:0.2),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildPillTab('All', 0, projectsBloc),
-                        _buildPillTab('My Projects', 1, projectsBloc),
-                        _buildPillTab('Contributed', 2, projectsBloc),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Projects',
+                              style: AppFonts.headlineMedium.copyWith(
+                                color: AppColors.onPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                context.push(AppRoutes.createProject);
+                              },
+                              icon: const Icon(
+                                Icons.add_circle,
+                                color: AppColors.onPrimary,
+                                size: 32,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Search Bar
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.neutralWhite.withValues(
+                              alpha: 0.2,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: TextField(
+                            onChanged: _onSearchChanged,
+                            style: AppFonts.bodyMedium.copyWith(
+                              color: AppColors.onPrimary,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Search projects...',
+                              hintStyle: AppFonts.bodyMedium.copyWith(
+                                color: AppColors.onPrimary.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: AppColors.onPrimary,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Modern Pill-Style Tabs
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.neutralWhite.withValues(
+                              alpha: 0.2,
+                            ),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Row(
+                            children: [
+                              _buildPillTab('All', 0, projectsBloc),
+                              _buildPillTab('My Projects', 1, projectsBloc),
+                              _buildPillTab('Contributed', 2, projectsBloc),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
+
+                  // Type Filters
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildTypeFilter(null, 'All', Icons.grid_view),
+                          const SizedBox(width: 8),
+                          _buildTypeFilter(
+                            AnnotationType.text,
+                            'Text',
+                            Icons.text_fields,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildTypeFilter(
+                            AnnotationType.image,
+                            'Image',
+                            Icons.image,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildTypeFilter(
+                            AnnotationType.audio,
+                            'Audio',
+                            Icons.audiotrack,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Projects List
+                  Expanded(
+                    child: isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryIndigo600,
+                            ),
+                          )
+                        : filteredProjects.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.folder_open,
+                                  size: 64,
+                                  color: AppColors.neutralSlate600.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No projects found',
+                                  style: AppFonts.titleMedium.copyWith(
+                                    color: AppColors.neutralSlate600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _selectedTabIndex == 1
+                                      ? 'Create your first project!'
+                                      : 'Try adjusting your filters',
+                                  style: AppFonts.bodyMedium.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: () async {
+                              context.read<ProjectsBloc>().add(
+                                LoadProjects(filter: _currentFilter),
+                              );
+                            },
+                            color: AppColors.primaryIndigo600,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              itemCount: filteredProjects.length,
+                              itemBuilder: (context, index) {
+                                return _buildProjectCard(
+                                  filteredProjects[index],
+                                );
+                              },
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
-
-            // Type Filters
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildTypeFilter(null, 'All', Icons.grid_view),
-                    const SizedBox(width: 8),
-                    _buildTypeFilter(AnnotationType.text, 'Text', Icons.text_fields),
-                    const SizedBox(width: 8),
-                    _buildTypeFilter(AnnotationType.image, 'Image', Icons.image),
-                    const SizedBox(width: 8),
-                    _buildTypeFilter(AnnotationType.audio, 'Audio', Icons.audiotrack),
-                  ],
-                ),
-              ),
-            ),
-
-            // Projects List
-            Expanded(
-              child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryIndigo600,
-                      ),
-                    )
-                  : errorMessage != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.error_outline, size: 64, color: AppColors.secondaryRed500),
-                              const SizedBox(height: 16),
-                              Text('Error loading projects', style: AppFonts.titleLarge),
-                              const SizedBox(height: 8),
-                              Text(errorMessage, style: AppFonts.bodyMedium, textAlign: TextAlign.center),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: () => context.read<ProjectsBloc>().add(LoadProjects(filter: _currentFilter)),
-                                child: const Text('Retry'),
-                              ),
-                            ],
-                          ),
-                        )
-                      : filteredProjects.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.folder_open,
-                                size: 64,
-                                color: AppColors.neutralSlate600.withValues(alpha:0.5),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No projects found',
-                                style: AppFonts.titleMedium.copyWith(
-                                  color: AppColors.neutralSlate600,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _selectedTabIndex == 1
-                                    ? 'Create your first project!'
-                                    : 'Try adjusting your filters',
-                                style: AppFonts.bodyMedium.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: () async {
-                            context.read<ProjectsBloc>().add(LoadProjects(filter: _currentFilter));
-                          },
-                          color: AppColors.primaryIndigo600,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: filteredProjects.length,
-                            itemBuilder: (context, index) {
-                              return _buildProjectCard(filteredProjects[index]);
-                            },
-                          ),
-                        ),
-            ),
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
-    );
+          );
         },
       ),
     );
@@ -316,7 +333,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.neutralSlate900_25.withValues(alpha:0.1),
+                      color: AppColors.neutralSlate900_25.withValues(
+                        alpha: 0.1,
+                      ),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -327,7 +346,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             label,
             textAlign: TextAlign.center,
             style: AppFonts.bodyMedium.copyWith(
-              color: isSelected ? AppColors.primaryIndigo600 : AppColors.onPrimary.withValues(alpha:0.9),
+              color: isSelected
+                  ? AppColors.primaryIndigo600
+                  : AppColors.onPrimary.withValues(alpha: 0.9),
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               fontSize: 14,
             ),
@@ -339,7 +360,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   Widget _buildTypeFilter(AnnotationType? type, String label, IconData icon) {
     final isSelected = _filterType == type;
-    final color = type != null ? _getTypeColor(type) : AppColors.neutralSlate600;
+    final color = type != null
+        ? _getTypeColor(type)
+        : AppColors.neutralSlate600;
 
     return GestureDetector(
       onTap: () => _onTypeFilterChanged(type),
@@ -365,7 +388,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             Text(
               label,
               style: AppFonts.bodyMedium.copyWith(
-                color: isSelected ? AppColors.onPrimary : AppColors.onBackground,
+                color: isSelected
+                    ? AppColors.onPrimary
+                    : AppColors.onBackground,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -389,13 +414,13 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isOwner
-                ? AppColors.primaryIndigo600.withValues(alpha:0.3)
+                ? AppColors.primaryIndigo600.withValues(alpha: 0.3)
                 : AppColors.neutralSlate600_30,
             width: isOwner ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.neutralSlate900_25.withValues(alpha:0.05),
+              color: AppColors.neutralSlate900_25.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -419,7 +444,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       height: 120,
-                      color: _getTypeColor(project.type).withValues(alpha:0.1),
+                      color: _getTypeColor(project.type).withValues(alpha: 0.1),
                       child: Center(
                         child: Icon(
                           _getTypeIcon(project.type),
@@ -438,7 +463,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   gradient: LinearGradient(
                     colors: [
                       _getTypeColor(project.type),
-                      _getTypeColor(project.type).withValues(alpha:0.7),
+                      _getTypeColor(project.type).withValues(alpha: 0.7),
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
@@ -581,7 +606,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getTypeColor(project.type).withValues(alpha:0.1),
+                          color: _getTypeColor(
+                            project.type,
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(

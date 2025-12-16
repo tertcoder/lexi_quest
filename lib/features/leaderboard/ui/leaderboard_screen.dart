@@ -55,7 +55,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LeaderboardBloc()..add(const SubscribeToLeaderboard()),
+      create: (context) =>
+          LeaderboardBloc()..add(const SubscribeToLeaderboard()),
       child: BlocBuilder<LeaderboardBloc, LeaderboardState>(
         builder: (context, state) {
           List<LeaderboardEntry> entries = [];
@@ -73,308 +74,354 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           return Scaffold(
             backgroundColor: AppColors.surface,
             body: SafeArea(
-        child: Column(
-          children: [
-            // Header with gradient
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryIndigo600, AppColors.primaryIndigo500],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
-                ),
-              ),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      // IconButton(
-                      //   onPressed: () => Navigator.of(context).pop(),
-                      //   icon: const Icon(
-                      //     Icons.arrow_back,
-                      //     color: AppColors.onPrimary,
-                      //   ),
-                      // ),
-                      // const SizedBox(width: 8),
-                      Text(
-                        'Leaderboard',
-                        style: AppFonts.headlineMedium.copyWith(
-                          color: AppColors.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Filter Tabs
+                  // Header with gradient
                   Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.neutralWhite.withValues(alpha:0.2),
-                      borderRadius: BorderRadius.circular(12),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryIndigo600,
+                          AppColors.primaryIndigo500,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
+                      ),
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        _buildFilterTab('Daily', LeaderboardFilter.daily),
-                        _buildFilterTab('Weekly', LeaderboardFilter.weekly),
-                        _buildFilterTab('All Time', LeaderboardFilter.allTime),
+                        Row(
+                          children: [
+                            // IconButton(
+                            //   onPressed: () => Navigator.of(context).pop(),
+                            //   icon: const Icon(
+                            //     Icons.arrow_back,
+                            //     color: AppColors.onPrimary,
+                            //   ),
+                            // ),
+                            // const SizedBox(width: 8),
+                            Text(
+                              'Leaderboard',
+                              style: AppFonts.headlineMedium.copyWith(
+                                color: AppColors.onPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Filter Tabs
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.neutralWhite.withValues(
+                              alpha: 0.2,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              _buildFilterTab('Daily', LeaderboardFilter.daily),
+                              _buildFilterTab(
+                                'Weekly',
+                                LeaderboardFilter.weekly,
+                              ),
+                              _buildFilterTab(
+                                'All Time',
+                                LeaderboardFilter.allTime,
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
 
-            // Leaderboard List
-            Expanded(
-              child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryIndigo600,
-                      ),
-                    )
-                  : errorMessage != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.error_outline, size: 64, color: AppColors.secondaryRed500),
-                              const SizedBox(height: 16),
-                              Text('Error loading leaderboard', style: AppFonts.titleLarge),
-                              const SizedBox(height: 8),
-                              Text(errorMessage, style: AppFonts.bodyMedium, textAlign: TextAlign.center),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: () => context.read<LeaderboardBloc>().add(const LoadLeaderboard()),
-                                child: const Text('Retry'),
-                              ),
-                            ],
-                          ),
-                        )
-                      : entries.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.leaderboard_outlined,
-                                size: 64,
-                                color: AppColors.neutralSlate600,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No leaderboard data',
-                                style: AppFonts.titleMedium.copyWith(
+                  // Leaderboard List
+                  Expanded(
+                    child: isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryIndigo600,
+                            ),
+                          )
+                        : entries.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.leaderboard_outlined,
+                                  size: 64,
                                   color: AppColors.neutralSlate600,
                                 ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: () async {
-                            context.read<LeaderboardBloc>().add(const RefreshLeaderboard());
-                          },
-                          color: AppColors.primaryIndigo600,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: entries.length,
-                            itemBuilder: (context, index) {
-                              final entry = entries[index];
-                              final isCurrentUser = entry.username == 'Bon';
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No leaderboard data',
+                                  style: AppFonts.titleMedium.copyWith(
+                                    color: AppColors.neutralSlate600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: () async {
+                              context.read<LeaderboardBloc>().add(
+                                const RefreshLeaderboard(),
+                              );
+                            },
+                            color: AppColors.primaryIndigo600,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: entries.length,
+                              itemBuilder: (context, index) {
+                                final entry = entries[index];
+                                final isCurrentUser = entry.username == 'Bon';
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: isCurrentUser
-                                        ? AppColors.primaryIndigo600.withValues(alpha:0.1)
-                                        : AppColors.background,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Container(
+                                    decoration: BoxDecoration(
                                       color: isCurrentUser
                                           ? AppColors.primaryIndigo600
-                                          : AppColors.neutralSlate600_30,
-                                      width: isCurrentUser ? 2 : 1,
+                                                .withValues(alpha: 0.1)
+                                          : AppColors.background,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isCurrentUser
+                                            ? AppColors.primaryIndigo600
+                                            : AppColors.neutralSlate600_30,
+                                        width: isCurrentUser ? 2 : 1,
+                                      ),
                                     ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Row(
-                                      children: [
-                                        // Rank
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: _getRankColor(entry.rank).withValues(alpha:0.1),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Center(
-                                            child: entry.rank <= 3
-                                                ? Icon(
-                                                    _getRankIcon(entry.rank),
-                                                    color: _getRankColor(entry.rank),
-                                                    size: 24,
-                                                  )
-                                                : Text(
-                                                    '${entry.rank}',
-                                                    style: AppFonts.titleMedium.copyWith(
-                                                      color: AppColors.onBackground,
-                                                      fontWeight: FontWeight.bold,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Row(
+                                        children: [
+                                          // Rank
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: _getRankColor(
+                                                entry.rank,
+                                              ).withValues(alpha: 0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Center(
+                                              child: entry.rank <= 3
+                                                  ? Icon(
+                                                      _getRankIcon(entry.rank),
+                                                      color: _getRankColor(
+                                                        entry.rank,
+                                                      ),
+                                                      size: 24,
+                                                    )
+                                                  : Text(
+                                                      '${entry.rank}',
+                                                      style: AppFonts
+                                                          .titleMedium
+                                                          .copyWith(
+                                                            color: AppColors
+                                                                .onBackground,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
                                                     ),
-                                                  ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-
-                                        // Avatar
-                                        Container(
-                                          width: 48,
-                                          height: 48,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: _getRankColor(entry.rank),
-                                              width: 2,
                                             ),
                                           ),
-                                          child: CircleAvatar(
-                                            radius: 22,
-                                            backgroundImage: entry.avatarUrl != null
-                                                ? NetworkImage(entry.avatarUrl!)
-                                                : AssetImage(AppAssets.defaultProfile) as ImageProvider,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
+                                          const SizedBox(width: 12),
 
-                                        // User Info
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Flexible(
-                                                    child: Text(
-                                                      entry.username,
-                                                      style: AppFonts.titleMedium.copyWith(
-                                                        color: AppColors.onBackground,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                  if (isCurrentUser) ...[
-                                                    const SizedBox(width: 6),
-                                                    Container(
-                                                      padding: const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 2,
-                                                      ),
-                                                      decoration: BoxDecoration(
-                                                        color: AppColors.primaryIndigo600,
-                                                        borderRadius: BorderRadius.circular(4),
-                                                      ),
+                                          // Avatar
+                                          Container(
+                                            width: 48,
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: _getRankColor(
+                                                  entry.rank,
+                                                ),
+                                                width: 2,
+                                              ),
+                                            ),
+                                            child: CircleAvatar(
+                                              radius: 22,
+                                              backgroundImage:
+                                                  entry.avatarUrl != null
+                                                  ? NetworkImage(
+                                                      entry.avatarUrl!,
+                                                    )
+                                                  : AssetImage(
+                                                          AppAssets
+                                                              .defaultProfile,
+                                                        )
+                                                        as ImageProvider,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+
+                                          // User Info
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Flexible(
                                                       child: Text(
-                                                        'You',
-                                                        style: AppFonts.labelSmall.copyWith(
-                                                          color: AppColors.onPrimary,
-                                                          fontWeight: FontWeight.bold,
+                                                        entry.username,
+                                                        style: AppFonts
+                                                            .titleMedium
+                                                            .copyWith(
+                                                              color: AppColors
+                                                                  .onBackground,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    if (isCurrentUser) ...[
+                                                      const SizedBox(width: 6),
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 2,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: AppColors
+                                                              .primaryIndigo600,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                4,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          'You',
+                                                          style: AppFonts
+                                                              .labelSmall
+                                                              .copyWith(
+                                                                color: AppColors
+                                                                    .onPrimary,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
                                                         ),
                                                       ),
+                                                    ],
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    SvgPicture.asset(
+                                                      _getBadgeAsset(
+                                                        entry.level,
+                                                      ),
+                                                      width: 16,
+                                                      height: 16,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Flexible(
+                                                      child: Text(
+                                                        'Level ${entry.level}',
+                                                        style: AppFonts
+                                                            .bodySmall
+                                                            .copyWith(
+                                                              color: AppColors
+                                                                  .onSurfaceVariant,
+                                                            ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    const Icon(
+                                                      Icons
+                                                          .local_fire_department,
+                                                      size: 14,
+                                                      color: AppColors
+                                                          .secondaryAmber500,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      '${entry.streak} days',
+                                                      style: AppFonts.bodySmall
+                                                          .copyWith(
+                                                            color: AppColors
+                                                                .onSurfaceVariant,
+                                                          ),
                                                     ),
                                                   ],
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                children: [
-                                                  SvgPicture.asset(
-                                                    _getBadgeAsset(entry.level),
-                                                    width: 16,
-                                                    height: 16,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Flexible(
-                                                    child: Text(
-                                                      'Level ${entry.level}',
-                                                      style: AppFonts.bodySmall.copyWith(
-                                                        color: AppColors.onSurfaceVariant,
-                                                      ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  const Icon(
-                                                    Icons.local_fire_department,
-                                                    size: 14,
-                                                    color: AppColors.secondaryAmber500,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    '${entry.streak} days',
-                                                    style: AppFonts.bodySmall.copyWith(
-                                                      color: AppColors.onSurfaceVariant,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        // XP
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.star,
-                                                  color: AppColors.secondaryAmber500,
-                                                  size: 20,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  '${entry.totalXp}',
-                                                  style: AppFonts.titleMedium.copyWith(
-                                                    color: AppColors.secondaryAmber500,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '${entry.annotationsCompleted} tasks',
-                                              style: AppFonts.bodySmall.copyWith(
-                                                color: AppColors.onSurfaceVariant,
+                                          ),
+
+                                          // XP
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.star,
+                                                    color: AppColors
+                                                        .secondaryAmber500,
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${entry.totalXp}',
+                                                    style: AppFonts.titleMedium
+                                                        .copyWith(
+                                                          color: AppColors
+                                                              .secondaryAmber500,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                  ),
+                                                ],
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '${entry.annotationsCompleted} tasks',
+                                                style: AppFonts.bodySmall
+                                                    .copyWith(
+                                                      color: AppColors
+                                                          .onSurfaceVariant,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
-                        ),
+                  ),
+                  SizedBox(height: 100),
+                ],
+              ),
             ),
-            SizedBox(height: 100,)
-
-          ],
-        ),
-      ),
           );
         },
       ),
@@ -394,9 +441,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.neutralWhite
-                : Colors.transparent,
+            color: isSelected ? AppColors.neutralWhite : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
