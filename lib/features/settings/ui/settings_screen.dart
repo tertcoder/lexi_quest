@@ -86,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _notificationsEnabled = value;
                           });
                         },
-                        activeColor: AppColors.primaryIndigo600,
+                        activeThumbColor: AppColors.primaryIndigo600,
                       ),
                     ),
                     _buildSettingsTile(
@@ -100,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _soundEnabled = value;
                           });
                         },
-                        activeColor: AppColors.primaryIndigo600,
+                        activeThumbColor: AppColors.primaryIndigo600,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -131,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           );
                         },
-                        activeColor: AppColors.primaryIndigo600,
+                        activeThumbColor: AppColors.primaryIndigo600,
                       ),
                     ),
                     _buildSettingsTile(

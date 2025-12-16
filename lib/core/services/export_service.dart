@@ -59,7 +59,7 @@ class ExportService {
     
     // Rows
     for (final task in tasks) {
-      final labels = task.annotation.labels != null ? task.annotation.labels!.join(';') : '';
+      final labels = task.annotation.labels!.join(';');
       buffer.writeln([
         task.id,
         _escapeCsv(task.annotation.content),
@@ -107,8 +107,8 @@ class ExportService {
         buffer.writeln('Validated By: ${task.validatedBy}');
         buffer.writeln('Validated At: ${task.validatedAt}');
       }
-      if (task.annotation.labels != null && task.annotation.labels!.isNotEmpty) {
-        buffer.writeln('Labels: ${task.annotation.labels!.join(", ")}');
+      if (task.annotation.labels.isNotEmpty) {
+        buffer.writeln('Labels: ${task.annotation.labels.join(", ")}');
       }
       buffer.writeln();
     }

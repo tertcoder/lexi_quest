@@ -534,7 +534,7 @@ class ProfileScreen extends StatelessWidget {
                         onChanged: (value) {
                           // TODO: Toggle dark mode
                         },
-                        activeColor: AppColors.primaryIndigo600,
+                        activeThumbColor: AppColors.primaryIndigo600,
                       ),
                       onTap: null,
                     ),

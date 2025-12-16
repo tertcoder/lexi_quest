@@ -23,7 +23,9 @@ class LogoHeader extends StatelessWidget {
               children: [
                 Text(
                   "Annotate, Validate, Earn XP! With",
-                  style: AppFonts.bodySmall,
+                  style: AppFonts.bodySmall.copyWith(
+                    color: AppColors.neutralSlate50,
+                  ),
                 ),
                 // App name with different colors
                 RichText(

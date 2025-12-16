@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lexi_quest/core/widgets/confetti_overlay.dart';
 import 'package:lexi_quest/core/theme/app_colors.dart';
-import 'package:lexi_quest/core/theme/app_fonts.dart';
 import 'package:lexi_quest/core/utils/app_assets.dart';
 
 /// Service to handle celebration animations and dialogs

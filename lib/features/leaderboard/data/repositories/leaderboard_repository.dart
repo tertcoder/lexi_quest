@@ -56,7 +56,7 @@ class LeaderboardRepository extends BaseRepository {
         .order('rank')
         .limit(limit)
         .map((data) => data
-            .map((json) => LeaderboardEntry.fromJson(json as Map<String, dynamic>))
+            .map((json) => LeaderboardEntry.fromJson(json))
             .toList());
   }
   
